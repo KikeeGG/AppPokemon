@@ -33,10 +33,6 @@ body {
         sans-serif;
     background: #233044;
 }
-html,
-body {
-    touch-action: pan-x pan-y;
-}
 
 button,
 input {
@@ -90,6 +86,7 @@ button {
 }
 
 .cabecera {
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -121,7 +118,6 @@ button {
 
 .buscador-wrap {
     position: relative;
-    margin-bottom: 13px;
 }
 
 .buscador {
@@ -141,12 +137,6 @@ button {
 .buscador:focus-within {
     border-color: color-mix(in srgb, var(--accent) 70%, white);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
-}
-
-.buscador-icono {
-    color: var(--texto-suave);
-    font-size: 25px;
-    line-height: 0;
 }
 
 .buscador input {
@@ -498,10 +488,10 @@ button {
 .hero {
     position: relative;
     display: grid;
-    grid-template-columns: 1fr 190px;
-    min-height: 245px;
+    grid-template-columns: minmax(0, 1fr) 155px;
+    min-height: 225px;
     margin-bottom: 12px;
-    padding: 23px 20px 15px 22px;
+    padding: 19px 15px 14px 19px;
     overflow: hidden;
 }
 
@@ -520,56 +510,60 @@ button {
 .hero-texto {
     position: relative;
     z-index: 1;
-    align-self: end;
-    padding-bottom: 6px;
-    transform: translateY(-10px);
+    align-self: center;
+    min-width: 0;
+    padding-bottom: 2px;
+    transform: translateY(-3px);
 }
 
 .numero-pokedex {
-    margin-bottom: 2px;
+    margin-bottom: 3px;
     color: var(--texto-muy-suave);
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     letter-spacing: 1px;
 }
 
 .hero h1 {
-    font-size: clamp(40px, 11vw, 62px);
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    font-size: clamp(34px, 9vw, 50px);
     font-weight: 700;
     line-height: 0.98;
-    letter-spacing: -2px;
+    letter-spacing: -1.7px;
 }
 
 .categoria {
-    margin-top: 7px;
+    margin-top: 6px;
     color: var(--texto-suave);
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .tipos {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 14px;
+    gap: 5px;
+    margin-top: 11px;
 }
 
 .tipo-chip {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
+    gap: 6px;
     width: max-content;
-    padding: 7px 10px;
+    max-width: 100%;
+    padding: 6px 8px;
     border-radius: 999px;
     color: white;
     background: color-mix(in srgb, var(--tipo-color, #6f7c91) 78%, transparent);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.13);
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700;
 }
 
 .tipo-multiplicador {
     color: rgba(255, 255, 255, 0.72);
-    font-size: 9px;
+    font-size: 8px;
 }
 
 .tipo-chip[data-tipo="normal"] { --tipo-color: #a8a77a; }
@@ -595,15 +589,22 @@ button {
     position: relative;
     z-index: 1;
     display: grid;
-    place-items: end center;
+    place-items: center;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .hero-sprite {
-    width: 200px;
-    height: 200px;
+    display: block;
+    width: 145px;
+    height: 145px;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
-    filter: drop-shadow(0 20px 22px rgba(0, 0, 0, 0.25));
-    transform: translateY(4px);
+    object-position: center;
+    filter: drop-shadow(0 17px 19px rgba(0, 0, 0, 0.25));
+    transform: translateY(3px);
     animation: spriteEntrada 0.5s ease both;
 }
 
@@ -638,7 +639,8 @@ button {
 }
 
 .total-stats {
-    font-size: 13px;
+    color: var(--texto-muy-suave);
+    font-size: 10px;
     font-weight: 600;
     white-space: nowrap;
 }
@@ -650,7 +652,7 @@ button {
 }
 
 .habilidad {
-    min-height: 72px;
+    min-height: 7px;
     padding: 12px;
     border: 1px solid rgba(255, 255, 255, 0.17);
     border-radius: 16px;
@@ -1140,6 +1142,7 @@ footer strong {
         opacity: 0;
         transform: translateY(12px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1151,9 +1154,10 @@ footer strong {
         opacity: 0;
         transform: translateY(18px) scale(0.92);
     }
+
     to {
         opacity: 1;
-        transform: translateY(6px) scale(1);
+        transform: translateY(4px) scale(1);
     }
 }
 
@@ -1163,12 +1167,15 @@ footer strong {
     }
 
     .hero {
-        grid-template-columns: 1fr 210px;
+        grid-template-columns: minmax(0, 1fr) 165px;
+        min-height: 225px;
+        padding-right: 18px;
+        padding-left: 22px;
     }
 
     .hero-sprite {
-        width: 200px;
-        height: 200px;
+        width: 150px;
+        height: 150px;
     }
 }
 
@@ -1184,14 +1191,46 @@ footer strong {
     }
 
     .hero {
-        grid-template-columns: 1fr 145px;
-        padding-right: 14px;
-        padding-left: 16px;
+        grid-template-columns: minmax(0, 1fr) 125px;
+        min-height: 205px;
+        padding: 17px 11px 12px 15px;
+    }
+
+    .hero-texto {
+        transform: translateY(-2px);
+    }
+
+    .numero-pokedex {
+        font-size: 9px;
+    }
+
+    .hero h1 {
+        font-size: clamp(30px, 10vw, 40px);
+        letter-spacing: -1.3px;
+    }
+
+    .categoria {
+        margin-top: 5px;
+        font-size: 11px;
+    }
+
+    .tipos {
+        gap: 4px;
+        margin-top: 9px;
+    }
+
+    .tipo-chip {
+        padding: 5px 7px;
+        font-size: 8px;
+    }
+
+    .tipo-multiplicador {
+        font-size: 7px;
     }
 
     .hero-sprite {
-        width: 145px;
-        height: 145px;
+        width: 120px;
+        height: 120px;
     }
 
     .buscar-boton {

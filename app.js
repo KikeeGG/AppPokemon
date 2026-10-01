@@ -94,7 +94,7 @@ const nombresItems = {
     "linking-cord": "Cordón Unión"
 };
 
-const sugerenciasIniciales = ["pikachu", "bulbasaur", "charizard", "eevee"];
+const sugerenciasIniciales = [];
 
 let listaPokemon = [];
 let listaHabilidades = [];
@@ -190,7 +190,9 @@ async function cargarListadoPokemon() {
             url: pokemon.url
         }));
 
-        renderizarSugerencias(sugerenciasIniciales, false);
+        if (!elementos.buscador.value.trim()) {
+            actualizarSugerenciasAleatorias();
+        }
     } catch (error) {
         console.error(error);
         elementos.error.textContent = "No se ha podido cargar la lista de Pokémon. Puedes probar buscando por nombre igualmente.";
@@ -225,11 +227,7 @@ function buscarCoincidencias(texto) {
     const consulta = normalizar(texto);
 
     if (!consulta) {
-        return sugerenciasIniciales.map(nombre => ({
-            kind: "pokemon",
-            name: nombre,
-            id: listaPokemon.find(pokemon => pokemon.name === nombre)?.id || 0
-        }));
+        return obtenerSugerenciasAleatorias();
     }
 
     const resultados = [];
@@ -260,6 +258,32 @@ function buscarCoincidencias(texto) {
 
     resultados.push(...pokemonEmpiezan, ...habilidadesEmpiezan, ...pokemonContienen, ...habilidadesContienen);
     return resultados.slice(0, 10);
+}
+
+function obtenerSugerenciasAleatorias() {
+    if (listaPokemon.length === 0) {
+        return [];
+    }
+
+    const disponibles = [...listaPokemon];
+    const sugerencias = [];
+
+    while (sugerencias.length < 5 && disponibles.length > 0) {
+        const indice = Math.floor(Math.random() * disponibles.length);
+        const pokemon = disponibles.splice(indice, 1)[0];
+
+        sugerencias.push({
+            kind: "pokemon",
+            ...pokemon
+        });
+    }
+
+    return sugerencias;
+}
+
+function actualizarSugerenciasAleatorias() {
+    const sugerencias = obtenerSugerenciasAleatorias();
+    renderizarSugerencias(sugerencias, sugerencias.length > 0);
 }
 
 function mostrarSugerencias(texto) {
@@ -814,7 +838,8 @@ function cadenaTieneRamificaciones(nodo) {
 }
 
 function obtenerSpritePrincipal(pokemon) {
-    return pokemon.sprites.versions?.["generation-v"]?.["black-white"]?.front_default ||
+    return pokemon.sprites.versions?.["generation-v"]?.["black-white"]?.animated?.front_default ||
+        pokemon.sprites.versions?.["generation-v"]?.["black-white"]?.front_default ||
         pokemon.sprites.other?.home?.front_default ||
         pokemon.sprites.other?.["official-artwork"]?.front_default ||
         pokemon.sprites.front_default;
@@ -1276,7 +1301,11 @@ function prepararEventos() {
     });
 
     elementos.buscador.addEventListener("focus", () => {
-        mostrarSugerencias(elementos.buscador.value);
+        if (!elementos.buscador.value.trim()) {
+            actualizarSugerenciasAleatorias();
+        } else {
+            mostrarSugerencias(elementos.buscador.value);
+        }
     });
 
     elementos.busquedaForm.addEventListener("submit", event => {
