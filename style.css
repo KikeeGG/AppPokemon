@@ -33,6 +33,10 @@ body {
         sans-serif;
     background: #233044;
 }
+html,
+body {
+    touch-action: pan-x pan-y;
+}
 
 button,
 input {
