@@ -836,14 +836,14 @@ button {
 
 .evolucion-flecha {
     display: grid;
-    flex: 0 0 61px;
+    flex: 0 0 65px;
     justify-items: center;
     gap: 4px;
 }
 
 .flecha-linea {
     color: rgba(255, 255, 255, 0.72);
-    font-size: 22px;
+    font-size: 30px;
     line-height: 1;
 }
 
@@ -854,7 +854,7 @@ button {
     border-radius: 999px;
     color: var(--texto-suave);
     background: rgba(255, 255, 255, 0.045);
-    font-size: 7px;
+    font-size: 11px;
     line-height: 1.2;
     text-align: center;
 }
@@ -1010,42 +1010,48 @@ button {
 }
 
 .eevee-conexiones {
-    position: absolute;
-    z-index: 1;
-    inset: 0;
-    pointer-events: none;
+    display: none;
 }
 
-.eevee-conexiones::before,
-.eevee-conexiones::after {
-    position: absolute;
-    content: "";
-    left: 50%;
-    top: 50%;
-    width: 112px;
-    height: 1px;
-    transform-origin: left center;
-    background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 55%, white), rgba(255,255,255,.16));
-    opacity: .8;
+.eevee-nw {
+    grid-column: 1;
+    grid-row: 1;
 }
 
-.eevee-conexiones::before {
-    transform: rotate(0deg);
-    box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 35%, transparent);
+.eevee-n {
+    grid-column: 2;
+    grid-row: 1;
 }
 
-.eevee-conexiones::after {
-    transform: rotate(180deg);
+.eevee-ne {
+    grid-column: 3;
+    grid-row: 1;
 }
 
-.eevee-nw { grid-column: 1; grid-row: 1; }
-.eevee-n { grid-column: 2; grid-row: 1; }
-.eevee-ne { grid-column: 3; grid-row: 1; }
-.eevee-w { grid-column: 1; grid-row: 2; }
-.eevee-e { grid-column: 3; grid-row: 2; }
-.eevee-sw { grid-column: 1; grid-row: 3; }
-.eevee-s { grid-column: 2; grid-row: 3; }
-.eevee-se { grid-column: 3; grid-row: 3; }
+.eevee-w {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.eevee-e {
+    grid-column: 3;
+    grid-row: 2;
+}
+
+.eevee-sw {
+    grid-column: 1;
+    grid-row: 3;
+}
+
+.eevee-s {
+    grid-column: 2;
+    grid-row: 3;
+}
+
+.eevee-se {
+    grid-column: 3;
+    grid-row: 3;
+}
 
 .eevee-nw::before,
 .eevee-n::before,
@@ -1055,23 +1061,8 @@ button {
 .eevee-sw::before,
 .eevee-s::before,
 .eevee-se::before {
-    position: absolute;
-    content: "";
-    z-index: -1;
-    width: 76px;
-    height: 1px;
-    background: linear-gradient(90deg, rgba(255,255,255,.10), color-mix(in srgb, var(--accent) 48%, white));
-    opacity: .55;
+    display: none;
 }
-
-.eevee-n::before { transform: rotate(90deg); }
-.eevee-s::before { transform: rotate(-90deg); }
-.eevee-w::before { transform: rotate(0deg); }
-.eevee-e::before { transform: rotate(180deg); }
-.eevee-nw::before { transform: rotate(45deg); }
-.eevee-ne::before { transform: rotate(135deg); }
-.eevee-sw::before { transform: rotate(-45deg); }
-.eevee-se::before { transform: rotate(-135deg); }
 
 .efectividad {
     display: grid;

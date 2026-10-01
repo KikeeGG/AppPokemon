@@ -193,6 +193,7 @@ async function cargarListadoPokemon() {
         if (!elementos.buscador.value.trim()) {
             actualizarSugerenciasAleatorias();
         }
+
     } catch (error) {
         console.error(error);
         elementos.error.textContent = "No se ha podido cargar la lista de Pokémon. Puedes probar buscando por nombre igualmente.";
@@ -858,7 +859,8 @@ function crearTarjetaEvolucion(nodo, mapaPokemons, especieSeleccionada, claseExt
         : capitalizar(nodo.species.name);
     const imagen = pokemon ? obtenerSpriteEvolucion(pokemon) : "";
 
-    const tarjeta = document.createElement("article");
+    const tarjeta = document.createElement("button");
+    tarjeta.type = "button";
     tarjeta.className = `evolucion-pokemon ${claseExtra}`;
 
     if (nodo.species.name === especieSeleccionada) {
@@ -874,6 +876,14 @@ function crearTarjetaEvolucion(nodo, mapaPokemons, especieSeleccionada, claseExt
     texto.textContent = nombre;
 
     tarjeta.append(sprite, texto);
+
+    tarjeta.addEventListener("click", () => {
+        elementos.buscador.value = nodo.species.name;
+        elementos.limpiarBusqueda.classList.add("visible");
+        buscarPokemon(nodo.species.name);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
     return tarjeta;
 }
 
