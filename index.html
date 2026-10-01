@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#233044">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Pokédex">
+    <title>Pokédex</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-180.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="fondo-pokemon" id="fondoPokemon"></div>
+    <div class="fondo-desenfoque"></div>
+    <div class="fondo-oscuro"></div>
+
+    <main class="app">
+        <header class="cabecera">
+            <div>
+                <p class="marca">KIKEDEX</p>
+            </div>
+        </header>
+
+        <section class="buscador-wrap">
+            <form class="buscador" id="busquedaForm" autocomplete="off">
+                <span class="buscador-icono">⌕</span>
+                <input
+                    id="buscador"
+                    type="text"
+                    inputmode="search"
+                    placeholder="Elige pokemon..."
+                    aria-label="Buscar Pokémon"
+                    spellcheck="false">
+                <button type="button" class="limpiar-busqueda" id="limpiarBusqueda" aria-label="Limpiar búsqueda">×</button>
+                <button type="submit" class="buscar-boton">Buscar</button>
+            </form>
+            <div class="sugerencias" id="sugerencias"></div>
+        </section>
+
+        <div class="estado" id="estado">Cargando...</div>
+        <p class="error" id="error"></p>
+
+        <section class="habilidad-detalle tarjeta" id="habilidadDetalle"></section>
+
+        <section class="ficha" id="ficha">
+            <section class="hero tarjeta">
+                <div class="hero-texto">
+                    <p class="numero-pokedex" id="numeroPokedex">#0000</p>
+                    <h1 id="nombrePokemon">Bulbasur</h1>
+                    <p class="categoria" id="categoriaPokemon">Pokémon</p>
+                    <div class="tipos" id="tiposPokemon"></div>
+                </div>
+                <div class="hero-sprite-wrap">
+                    <img id="pokemonSprite" class="hero-sprite" src="" alt="Sprite del Pokémon">
+                </div>
+            </section>
+
+            <section class="bloque tarjeta">
+                <div class="titulo-bloque">
+                    <div>
+                        <span>HABILIDADES</span>
+                        <small>Posibles que puede tener</small>
+
+                    </div>
+                </div>
+                <div class="habilidades" id="habilidades"></div>
+            </section>
+
+            <section class="bloque tarjeta">
+                <div class="leyenda-stats">
+                <span>STATS</span>
+
+                </div>
+                <div class="stats" id="stats"></div>
+                <br>
+                <div class="titulo-bloque">
+                    <br>
+                    <strong class="total-stats" id="totalStats">0 <small>TOTAL</small></strong>
+                </div>
+            </section>
+
+            <section class="bloque tarjeta">
+                <div class="titulo-bloque">
+                    <div>
+                        <span>LÍNEA EVOLUTIVA</span>
+                        <small>Pre-evoluciones, evoluciones y ramas</small>
+                    </div>
+                </div>
+                <div class="evoluciones" id="evoluciones"></div>
+            </section>
+
+            <section class="bloque tarjeta">
+                <div class="titulo-bloque">
+                    <div>
+                        <span>TIPOS Y EFECTIVIDAD</span>
+                        <small>Cómo recibe y hace daño por tipos</small>
+                    </div>
+                </div>
+
+                <div class="efectividad">
+                    <article class="grupo-efectividad grupo-debilidades">
+                        <div class="grupo-cabecera">
+                            <span class="grupo-icono">💔​</span>
+                            <div>
+                                <strong>Debilidades</strong>
+                            </div>
+                        </div>
+                        <div class="grupo-tipos" id="debilidades"></div>
+                    </article>
+
+                    <article class="grupo-efectividad grupo-resistencias">
+                        <div class="grupo-cabecera">
+                            <span class="grupo-icono">​🛡️​</span>
+                            <div>
+                                <strong>Resistencias</strong>
+                            </div>
+                        </div>
+                        <div class="grupo-tipos" id="resistencias"></div>
+                    </article>
+
+                    <article class="grupo-efectividad grupo-inmunidades">
+                        <div class="grupo-cabecera">
+                            <span class="grupo-icono">​​​​❌​​</span>
+                            <div>
+                                <strong>Inmunidades</strong>
+                            </div>
+                        </div>
+                        <div class="grupo-tipos" id="inmunidades"></div>
+                    </article>
+
+                    <article class="grupo-efectividad grupo-ofensivas">
+                        <div class="grupo-cabecera">
+                            <span class="grupo-icono">​​🗡️​</span>
+                            <div>
+                                <strong>Ventaja ofensiva</strong>
+                            </div>
+                        </div>
+                        <div class="grupo-tipos" id="ofensivas"></div>
+                    </article>
+                </div>
+            </section>
+        </section>
+
+        <footer>
+            Dar gracias a <strong>Kikesito</strong>
+        </footer>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
