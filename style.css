@@ -98,9 +98,11 @@ button {
     justify-content: center;
     align-items: center;
     text-align: center;
-    font-size: 30px;
-    font-weight: 700;
-    letter-spacing: -0.5px;
+    font-size: 27px;
+    font-weight: 600;
+    letter-spacing: -1.1px;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.96);
 }
 
 .marca span {
@@ -126,17 +128,21 @@ button {
     gap: 8px;
     min-height: 52px;
     padding: 5px 6px 5px 14px;
-    border: 1px solid var(--borde);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 18px;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.07));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 14px 42px rgba(0, 0, 0, 0.16);
-    backdrop-filter: blur(28px) saturate(1.2);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.10);
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(30px) saturate(1.15);
+    -webkit-backdrop-filter: blur(30px) saturate(1.15);
 }
 
 .buscador:focus-within {
-    border-color: color-mix(in srgb, var(--accent) 70%, white);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 55%, white);
+    box-shadow:
+        0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent),
+        0 12px 35px rgba(0, 0, 0, 0.14);
 }
 
 .buscador input {
@@ -472,17 +478,14 @@ button {
 }
 
 .tarjeta {
-    border: 1px solid var(--borde);
+    border: 1px solid rgba(255, 255, 255, 0.13);
     border-radius: 24px;
-    background:
-        linear-gradient(145deg, rgba(255, 255, 255, 0.17), rgba(255, 255, 255, 0.055) 52%, rgba(255, 255, 255, 0.035)),
-        rgba(255, 255, 255, 0.055);
+    background: rgba(255, 255, 255, 0.075);
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.18),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.025),
-        0 18px 55px var(--sombra);
-    backdrop-filter: blur(28px) saturate(1.2);
-    -webkit-backdrop-filter: blur(28px) saturate(1.2);
+        0 20px 55px rgba(0, 0, 0, 0.20),
+        inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    backdrop-filter: blur(30px) saturate(1.15);
+    -webkit-backdrop-filter: blur(30px) saturate(1.15);
 }
 
 .hero {
@@ -493,6 +496,7 @@ button {
     margin-bottom: 12px;
     padding: 19px 15px 14px 19px;
     overflow: hidden;
+    background: rgba(255, 255, 255, 0.045);
 }
 
 .hero::before {
@@ -567,9 +571,9 @@ button {
     max-width: 100%;
     overflow-wrap: anywhere;
     font-size: clamp(34px, 9vw, 50px);
-    font-weight: 700;
+    font-weight: 650;
     line-height: 0.98;
-    letter-spacing: -1.7px;
+    letter-spacing: -1.8px;
 }
 
 .categoria {
@@ -644,7 +648,6 @@ button {
     object-position: center;
     filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.12)) drop-shadow(0 17px 19px rgba(0, 0, 0, 0.0ve));
     transform: translateY(3px);
-    animation: spriteEntrada 0.5s ease both;
 }
 
 .bloque {
@@ -698,8 +701,6 @@ button {
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.045));
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 8px 25px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    cursor: pointer;
 }
 
 .habilidad.oculta {
