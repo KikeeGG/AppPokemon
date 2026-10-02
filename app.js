@@ -671,6 +671,12 @@ function renderizarHabilidades(pokemon, habilidades) {
         );
 
         tarjeta.append(etiqueta, nombre);
+        tarjeta.addEventListener("click", () => {
+            elementos.buscador.value = referencia.ability.name;
+            elementos.limpiarBusqueda.classList.add("visible");
+            buscarHabilidad(referencia.ability.name);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        });
         elementos.habilidades.appendChild(tarjeta);
     });
 
