@@ -103,6 +103,8 @@ let cacheSpecies = new Map();
 let cacheAbility = new Map();
 let cacheType = new Map();
 let solicitudActual = 0;
+let pokemonActual = null;
+let mostrandoShiny = false;
 
 const elementos = {};
 
@@ -118,6 +120,7 @@ function iniciarElementos() {
         "ficha",
         "fondoPokemon",
         "pokemonSprite",
+        "shinyBoton",
         "numeroPokedex",
         "nombrePokemon",
         "categoriaPokemon",
@@ -576,6 +579,12 @@ function obtenerTextoLocalizado(lista, campo) {
 }
 
 function mostrarPokemon(pokemon, species, habilidades, tipos) {
+    pokemonActual = pokemon;
+    mostrandoShiny = false;
+    elementos.shinyBoton.classList.remove("activo");
+    elementos.shinyBoton.setAttribute("aria-pressed", "false");
+    elementos.shinyBoton.setAttribute("aria-label", "Mostrar versión shiny");
+
     elementos.habilidadDetalle.classList.remove("visible");
     elementos.ficha.classList.add("visible");
 
@@ -846,6 +855,14 @@ function obtenerSpritePrincipal(pokemon) {
         pokemon.sprites.other?.home?.front_default ||
         pokemon.sprites.other?.["official-artwork"]?.front_default ||
         pokemon.sprites.front_default;
+}
+
+function obtenerSpriteShiny(pokemon) {
+    return pokemon.sprites.versions?.["generation-v"]?.["black-white"]?.animated?.front_shiny ||
+        pokemon.sprites.versions?.["generation-v"]?.["black-white"]?.front_shiny ||
+        pokemon.sprites.other?.home?.front_shiny ||
+        pokemon.sprites.other?.["official-artwork"]?.front_shiny ||
+        pokemon.sprites.front_shiny;
 }
 
 function obtenerSpriteEvolucion(pokemon) {
@@ -1320,6 +1337,31 @@ function prepararEventos() {
         }
     });
 
+    elementos.shinyBoton.addEventListener("click", () => {
+        if (!pokemonActual) {
+            return;
+        }
+
+        const spriteShiny = obtenerSpriteShiny(pokemonActual);
+
+        if (!spriteShiny) {
+            return;
+        }
+
+        mostrandoShiny = !mostrandoShiny;
+
+        elementos.pokemonSprite.src = mostrandoShiny
+            ? spriteShiny
+            : obtenerSpritePrincipal(pokemonActual);
+
+        elementos.shinyBoton.classList.toggle("activo", mostrandoShiny);
+        elementos.shinyBoton.setAttribute("aria-pressed", String(mostrandoShiny));
+        elementos.shinyBoton.setAttribute(
+            "aria-label",
+            mostrandoShiny ? "Mostrar versión normal" : "Mostrar versión shiny"
+        );
+    });
+
     elementos.busquedaForm.addEventListener("submit", event => {
         event.preventDefault();
         buscarEntrada(elementos.buscador.value);
@@ -1467,4 +1509,4 @@ async function iniciarApp() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", iniciarApp);
+iniciarApp();
