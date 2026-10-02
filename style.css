@@ -903,12 +903,12 @@ button {
 .evolucion-arbol {
     display: flex;
     align-items: center;
-    gap: 13px;
+    gap: 18px;
     width: 100%;
     min-width: max-content;
     justify-content: center;
     overflow-x: auto;
-    padding: 5px 2px 11px;
+    padding: 8px 4px 14px;
     scrollbar-width: thin;
 }
 
@@ -917,58 +917,126 @@ button {
 }
 
 .arbol-raiz {
+    position: relative;
     flex: 0 0 auto;
+    z-index: 3;
 }
 
 .arbol-hijos {
     position: relative;
-    display: grid;
-    gap: 9px;
-    min-width: 142px;
-    padding: 5px 0 5px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+    min-width: 205px;
+    padding: 8px 0 8px 28px;
 }
 
 .arbol-hijos::before {
     position: absolute;
     content: "";
-    top: 17px;
-    bottom: 17px;
+    top: 65px;
+    bottom: 65px;
     left: 0;
     width: 1px;
-    background: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.24);
 }
 
 .arbol-rama {
     position: relative;
     display: grid;
-    grid-template-columns: 48px 98px;
+    grid-template-columns: 56px 98px;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
+    min-height: 114px;
 }
 
-.arbol-rama:nth-child(odd) {
-    transform: translateY(-5px);
+.arbol-rama::before {
+    position: absolute;
+    content: "";
+    left: -28px;
+    top: 50%;
+    width: 28px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.24);
 }
 
-.arbol-rama:nth-child(even) {
-    transform: translateY(5px);
+.arbol-rama.rama-arriba::before,
+.arbol-rama.rama-abajo::before,
+.arbol-rama.rama-recta::before {
+    top: 50%;
+    width: 28px;
+    transform: none;
 }
 
 .arbol-conexion {
+    position: relative;
+    z-index: 2;
     display: grid;
     justify-items: center;
-    gap: 3px;
+    align-content: center;
+    gap: 5px;
+    min-width: 0;
 }
 
 .arbol-flecha {
-    color: rgba(255, 255, 255, 0.75);
-    font-size: 20px;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0;
+    line-height: 1;
+}
+
+.arbol-flecha::before {
+    content: "→";
+    font-size: 21px;
     line-height: 1;
 }
 
 .arbol-cuerpo {
-    display: grid;
-    gap: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.arbol-cuerpo > .arbol-hijos {
+    flex: 0 0 auto;
+    min-width: 190px;
+    margin: 0;
+    padding-left: 28px;
+}
+
+.arbol-cuerpo > .arbol-hijos::before {
+    top: 65px;
+    bottom: 65px;
+}
+
+.evolucion-arbol .evolucion-pokemon {
+    position: relative;
+    z-index: 2;
+}
+
+@media (max-width: 390px) {
+    .evolucion-arbol {
+        justify-content: flex-start;
+    }
+
+    .arbol-hijos {
+        min-width: 190px;
+        gap: 10px;
+    }
+
+    .arbol-rama {
+        grid-template-columns: 52px 98px;
+        gap: 6px;
+    }
+
+    .arbol-cuerpo > .arbol-hijos {
+        min-width: 170px;
+    }
 }
 
 .evolucion-eevee {
@@ -1284,27 +1352,4 @@ footer strong {
     .stat-relleno {
         transition: none;
     }
-}
-
-.arbol-rama::before {
-    position: absolute;
-    content: "";
-    left: -14px;
-    top: 50%;
-    width: 31px;
-    height: 1px;
-    background: rgba(255, 255, 255, 0.16);
-    transform-origin: left center;
-}
-
-.arbol-rama.rama-arriba::before {
-    transform: translateY(-50%) rotate(-24deg);
-}
-
-.arbol-rama.rama-abajo::before {
-    transform: translateY(-50%) rotate(24deg);
-}
-
-.arbol-rama.rama-recta::before {
-    transform: translateY(-50%);
 }
