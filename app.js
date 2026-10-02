@@ -94,7 +94,7 @@ const nombresItems = {
     "linking-cord": "Cordón Unión"
 };
 
-const sugerenciasIniciales = [];
+const sugerenciasIniciales = ["pikachu", "bulbasaur", "charizard", "eevee"];
 
 let listaPokemon = [];
 let listaHabilidades = [];
@@ -190,10 +190,7 @@ async function cargarListadoPokemon() {
             url: pokemon.url
         }));
 
-        if (!elementos.buscador.value.trim()) {
-            actualizarSugerenciasAleatorias();
-        }
-
+        renderizarSugerencias(sugerenciasIniciales, false);
     } catch (error) {
         console.error(error);
         elementos.error.textContent = "No se ha podido cargar la lista de Pokémon. Puedes probar buscando por nombre igualmente.";
@@ -228,7 +225,11 @@ function buscarCoincidencias(texto) {
     const consulta = normalizar(texto);
 
     if (!consulta) {
-        return obtenerSugerenciasAleatorias();
+        return sugerenciasIniciales.map(nombre => ({
+            kind: "pokemon",
+            name: nombre,
+            id: listaPokemon.find(pokemon => pokemon.name === nombre)?.id || 0
+        }));
     }
 
     const resultados = [];
@@ -259,32 +260,6 @@ function buscarCoincidencias(texto) {
 
     resultados.push(...pokemonEmpiezan, ...habilidadesEmpiezan, ...pokemonContienen, ...habilidadesContienen);
     return resultados.slice(0, 10);
-}
-
-function obtenerSugerenciasAleatorias() {
-    if (listaPokemon.length === 0) {
-        return [];
-    }
-
-    const disponibles = [...listaPokemon];
-    const sugerencias = [];
-
-    while (sugerencias.length < 5 && disponibles.length > 0) {
-        const indice = Math.floor(Math.random() * disponibles.length);
-        const pokemon = disponibles.splice(indice, 1)[0];
-
-        sugerencias.push({
-            kind: "pokemon",
-            ...pokemon
-        });
-    }
-
-    return sugerencias;
-}
-
-function actualizarSugerenciasAleatorias() {
-    const sugerencias = obtenerSugerenciasAleatorias();
-    renderizarSugerencias(sugerencias, sugerencias.length > 0);
 }
 
 function mostrarSugerencias(texto) {
@@ -590,9 +565,6 @@ function mostrarPokemon(pokemon, species, habilidades, tipos) {
         pokemon.sprites.other?.["official-artwork"]?.front_default ||
         imagen;
 
-    const tipoPrincipal = pokemon.types[0]?.type?.name || "normal";
-    const fondoTipo = `./assets/backgrounds/${tipoPrincipal}.gif`;
-
     elementos.ficha.classList.add("visible");
     elementos.nombrePokemon.textContent = nombre;
     elementos.numeroPokedex.textContent = `#${String(pokemon.id).padStart(4, "0")}`;
@@ -600,8 +572,11 @@ function mostrarPokemon(pokemon, species, habilidades, tipos) {
     elementos.pokemonSprite.src = imagen || "";
     elementos.pokemonSprite.alt = `Sprite de ${nombre}`;
 
-    elementos.fondoPokemon.style.backgroundImage = `url("${fondoTipo}"), url("${imagenFondo || ""}")`;
+    if (imagenFondo) {
+        elementos.fondoPokemon.style.backgroundImage = `url("${imagenFondo}")`;
+    }
 
+    const tipoPrincipal = pokemon.types[0]?.type?.name || "normal";
     document.documentElement.style.setProperty("--accent", coloresTipos[tipoPrincipal] || "#ffffff");
 
     document.title = `${nombre} · Pokédex`;
@@ -671,12 +646,14 @@ function renderizarHabilidades(pokemon, habilidades) {
         );
 
         tarjeta.append(etiqueta, nombre);
+
         tarjeta.addEventListener("click", () => {
             elementos.buscador.value = referencia.ability.name;
             elementos.limpiarBusqueda.classList.add("visible");
             buscarHabilidad(referencia.ability.name);
             window.scrollTo({ top: 0, behavior: "smooth" });
         });
+
         elementos.habilidades.appendChild(tarjeta);
     });
 
@@ -740,7 +717,7 @@ function renderizarStats(statsPokemon) {
     });
 
     const total = stats.reduce((totalBase, stat) => totalBase + stat.base, 0);
-    elementos.totalStats.textContent = `${total} Puntos`;
+    elementos.totalStats.textContent = `${total} puntos base`;
 }
 
 function clasificarStat(base, media, umbral, rango) {
@@ -845,8 +822,7 @@ function cadenaTieneRamificaciones(nodo) {
 }
 
 function obtenerSpritePrincipal(pokemon) {
-    return pokemon.sprites.versions?.["generation-v"]?.["black-white"]?.animated?.front_default ||
-        pokemon.sprites.versions?.["generation-v"]?.["black-white"]?.front_default ||
+    return pokemon.sprites.versions?.["generation-v"]?.["black-white"]?.front_default ||
         pokemon.sprites.other?.home?.front_default ||
         pokemon.sprites.other?.["official-artwork"]?.front_default ||
         pokemon.sprites.front_default;
@@ -865,8 +841,7 @@ function crearTarjetaEvolucion(nodo, mapaPokemons, especieSeleccionada, claseExt
         : capitalizar(nodo.species.name);
     const imagen = pokemon ? obtenerSpriteEvolucion(pokemon) : "";
 
-    const tarjeta = document.createElement("button");
-    tarjeta.type = "button";
+    const tarjeta = document.createElement("article");
     tarjeta.className = `evolucion-pokemon ${claseExtra}`;
 
     if (nodo.species.name === especieSeleccionada) {
@@ -1286,7 +1261,7 @@ function cargarUltimoPokemon() {
         return guardado;
     }
 
-    return "zekrom";
+    return "bulbasaur";
 }
 
 async function buscarEntrada(entrada) {
@@ -1317,11 +1292,7 @@ function prepararEventos() {
     });
 
     elementos.buscador.addEventListener("focus", () => {
-        if (!elementos.buscador.value.trim()) {
-            actualizarSugerenciasAleatorias();
-        } else {
-            mostrarSugerencias(elementos.buscador.value);
-        }
+        mostrarSugerencias(elementos.buscador.value);
     });
 
     elementos.busquedaForm.addEventListener("submit", event => {
@@ -1355,15 +1326,99 @@ function prepararEventos() {
     });
 }
 
+function prepararSwipePokemon() {
+    let inicioX = 0;
+    let inicioY = 0;
+    let movimientoHorizontal = false;
+
+    document.addEventListener("touchstart", event => {
+        if (event.touches.length !== 1) {
+            movimientoHorizontal = false;
+            return;
+        }
+
+        const objetivo = event.target;
+
+        if (objetivo.closest("input, button, a, textarea, select")) {
+            movimientoHorizontal = false;
+            return;
+        }
+
+        inicioX = event.touches[0].clientX;
+        inicioY = event.touches[0].clientY;
+        movimientoHorizontal = false;
+    }, { passive: true });
+
+    document.addEventListener("touchmove", event => {
+        if (!inicioX && !inicioY) {
+            return;
+        }
+
+        const actualX = event.touches[0].clientX;
+        const actualY = event.touches[0].clientY;
+        const desplazamientoX = actualX - inicioX;
+        const desplazamientoY = actualY - inicioY;
+
+        if (Math.abs(desplazamientoX) > 20 && Math.abs(desplazamientoX) > Math.abs(desplazamientoY)) {
+            movimientoHorizontal = true;
+        }
+    }, { passive: true });
+
+    document.addEventListener("touchend", event => {
+        if (!movimientoHorizontal) {
+            inicioX = 0;
+            inicioY = 0;
+            return;
+        }
+
+        const finalX = event.changedTouches[0].clientX;
+        const desplazamientoX = finalX - inicioX;
+        const minimoSwipe = 60;
+
+        inicioX = 0;
+        inicioY = 0;
+        movimientoHorizontal = false;
+
+        if (Math.abs(desplazamientoX) < minimoSwipe || listaPokemon.length === 0) {
+            return;
+        }
+
+        const numeroActual = Number(elementos.numeroPokedex.textContent.replace("#", ""));
+
+        if (!Number.isFinite(numeroActual) || numeroActual <= 0) {
+            return;
+        }
+
+        const siguienteId = desplazamientoX > 0 ? numeroActual + 1 : numeroActual - 1;
+
+        if (siguienteId < 1 || siguienteId > listaPokemon.length) {
+            return;
+        }
+
+        const siguiente = listaPokemon.find(pokemon => pokemon.id === siguienteId);
+
+        if (!siguiente) {
+            return;
+        }
+
+        elementos.buscador.value = siguiente.name;
+        elementos.limpiarBusqueda.classList.add("visible");
+        buscarPokemon(siguiente.name);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }, { passive: true });
+}
+
 async function iniciarApp() {
     iniciarElementos();
     prepararEventos();
+    prepararSwipePokemon();
 
     const inicial = cargarUltimoPokemon();
+    elementos.buscador.value = inicial;
+    elementos.limpiarBusqueda.classList.add("visible");
 
-    elementos.buscador.value = "";
-    elementos.limpiarBusqueda.classList.remove("visible");
-
+    // La ficha se carga primero. El listado completo se prepara en segundo plano
+    // para que el arranque no dependa de una petición enorme a PokéAPI.
     await buscarPokemon(inicial, { inicial: true });
     cargarListadoPokemon();
     cargarListadoHabilidades();

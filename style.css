@@ -603,7 +603,7 @@ button {
     max-height: 100%;
     object-fit: contain;
     object-position: center;
-    filter: drop-shadow(0 17px 19px rgba(0, 0, 0, 0.25));
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.12)) drop-shadow(0 17px 19px rgba(0, 0, 0, 0.0ve));
     transform: translateY(3px);
     animation: spriteEntrada 0.5s ease both;
 }
