@@ -13,8 +13,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install browser
-        run: npx --yes playwright@1.56.1 install --with-deps chromium
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
       - name: Start server
         run: python3 -m http.server 4173 >/tmp/server.log 2>&1 &
       - name: Test Eevee layout
