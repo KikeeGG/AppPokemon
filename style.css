@@ -1043,14 +1043,14 @@ button {
 .evolucion-eevee {
     position: relative;
     display: grid;
-    grid-template-columns: repeat(3, minmax(130px, 1fr));
-    grid-template-rows: repeat(3, minmax(145px, auto));
+    grid-template-columns: repeat(3, minmax(122px, 1fr));
+    grid-template-rows: repeat(3, 146px);
     gap: 4px;
     width: 100%;
-    min-width: 430px;
-    min-height: 440px;
+    min-width: 410px;
+    height: 446px;
     margin-inline: auto;
-    padding: 8px;
+    padding: 5px;
     overflow: hidden;
 }
 
@@ -1072,16 +1072,17 @@ button {
     border-radius: 50%;
     background: color-mix(in srgb, var(--accent) 20%, transparent);
     filter: blur(30px);
-    opacity: 0.75;
+    opacity: 0.72;
     pointer-events: none;
 }
 
 .eevee-centro .evolucion-pokemon {
     position: relative;
     z-index: 2;
-    width: 112px;
-    min-width: 112px;
-    min-height: 122px;
+    width: 104px;
+    min-width: 104px;
+    min-height: 116px;
+    padding: 7px 6px 8px;
     border-color: color-mix(in srgb, var(--accent) 58%, white);
     background:
         linear-gradient(
@@ -1096,8 +1097,8 @@ button {
 }
 
 .eevee-centro .evolucion-pokemon img {
-    width: 82px;
-    height: 82px;
+    width: 78px;
+    height: 78px;
 }
 
 .eevee-rama {
@@ -1108,14 +1109,15 @@ button {
     justify-content: center;
     min-width: 0;
     min-height: 0;
-    gap: 6px;
+    gap: 7px;
+    overflow: visible;
 }
 
 .eevee-rama::before {
     position: absolute;
-    z-index: -1;
+    z-index: 0;
     content: "";
-    width: 42%;
+    width: 46%;
     height: 1px;
     background: linear-gradient(
         90deg,
@@ -1123,54 +1125,73 @@ button {
         rgba(255, 255, 255, 0.18),
         transparent
     );
+    pointer-events: none;
 }
 
 .eevee-rama::after {
     position: absolute;
-    z-index: -1;
+    z-index: 1;
     content: "";
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    background: color-mix(in srgb, var(--accent) 40%, rgba(255, 255, 255, 0.20));
-    box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 20%, transparent);
+    background: color-mix(in srgb, var(--accent) 42%, rgba(255, 255, 255, 0.18));
+    box-shadow:
+        0 0 12px color-mix(in srgb, var(--accent) 20%, transparent),
+        0 0 0 4px rgba(255, 255, 255, 0.025);
+    pointer-events: none;
 }
 
 .eevee-rama .evolucion-pokemon {
-    width: 88px;
-    min-width: 88px;
-    min-height: 100px;
-    padding: 6px 5px 8px;
+    position: relative;
+    z-index: 3;
+    width: 84px;
+    min-width: 84px;
+    min-height: 96px;
+    padding: 5px 4px 7px;
     border-radius: 18px;
     border-color: rgba(255, 255, 255, 0.12);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 8px 22px rgba(0, 0, 0, 0.10);
 }
 
 .eevee-rama .evolucion-pokemon img {
-    width: 64px;
-    height: 64px;
+    width: 58px;
+    height: 58px;
 }
 
 .eevee-contenido {
-    display: grid;
-    justify-items: center;
-    gap: 4px;
-    min-width: 0;
-    max-width: 104px;
+    display: contents;
 }
 
 .eevee-contenido .evolucion-condicion {
-    max-width: 102px;
-    font-size: 9px;
+    position: absolute;
+    z-index: 6;
+    display: block;
+    width: min(92px, calc(100% - 8px));
+    max-width: 92px;
+    padding: 4px 6px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.60);
+    background: rgba(255, 255, 255, 0.055);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    font-size: 8px;
+    line-height: 1.2;
+    text-align: center;
 }
 
 .eevee-flecha {
     position: relative;
-    z-index: 2;
+    z-index: 5;
     display: grid;
     place-items: center;
-    flex: 0 0 25px;
-    width: 25px;
-    height: 25px;
+    flex: 0 0 24px;
+    width: 24px;
+    height: 24px;
     border: 1px solid rgba(255, 255, 255, 0.13);
     border-radius: 50%;
     color: rgba(255, 255, 255, 0.88);
@@ -1187,81 +1208,69 @@ button {
 .eevee-nw {
     grid-column: 1;
     grid-row: 1;
-}
-
-.eevee-n {
-    grid-column: 2;
-    grid-row: 1;
-}
-
-.eevee-ne {
-    grid-column: 3;
-    grid-row: 1;
-}
-
-.eevee-w {
-    grid-column: 1;
-    grid-row: 2;
-}
-
-.eevee-e {
-    grid-column: 3;
-    grid-row: 2;
-}
-
-.eevee-sw {
-    grid-column: 1;
-    grid-row: 3;
-}
-
-.eevee-s {
-    grid-column: 2;
-    grid-row: 3;
-}
-
-.eevee-se {
-    grid-column: 3;
-    grid-row: 3;
-}
-
-/* Orientación y posición de cada conexión hacia Eevee */
-.eevee-nw {
     flex-direction: row;
 }
 
 .eevee-n {
+    grid-column: 2;
+    grid-row: 1;
     flex-direction: column;
 }
 
 .eevee-ne {
+    grid-column: 3;
+    grid-row: 1;
     flex-direction: row-reverse;
 }
 
 .eevee-w {
+    grid-column: 1;
+    grid-row: 2;
     flex-direction: row;
 }
 
 .eevee-e {
+    grid-column: 3;
+    grid-row: 2;
     flex-direction: row-reverse;
 }
 
 .eevee-sw {
+    grid-column: 1;
+    grid-row: 3;
     flex-direction: row;
 }
 
 .eevee-s {
+    grid-column: 2;
+    grid-row: 3;
     flex-direction: column-reverse;
 }
 
 .eevee-se {
+    grid-column: 3;
+    grid-row: 3;
     flex-direction: row-reverse;
 }
 
+/* Conexiones */
 .eevee-nw::before,
 .eevee-ne::before,
 .eevee-sw::before,
 .eevee-se::before {
-    width: 48%;
+    width: 52%;
+    height: 1px;
+}
+
+.eevee-n::before,
+.eevee-s::before {
+    width: 1px;
+    height: 52%;
+}
+
+.eevee-w::before,
+.eevee-e::before {
+    width: 52%;
     height: 1px;
 }
 
@@ -1281,75 +1290,51 @@ button {
     transform: rotate(33deg);
 }
 
-.eevee-n::before,
-.eevee-s::before {
-    width: 1px;
-    height: 48%;
-}
-
-.eevee-w::before,
-.eevee-e::before {
-    width: 48%;
-    height: 1px;
-}
-
-.eevee-n::before {
-    transform: none;
-}
-
-.eevee-s::before {
-    transform: none;
-}
-
-.eevee-w::before,
-.eevee-e::before {
-    transform: none;
-}
-
 .eevee-nw::after {
-    right: 18%;
-    bottom: 21%;
+    right: 16%;
+    bottom: 20%;
 }
 
 .eevee-n::after {
     left: 50%;
-    bottom: 17%;
+    bottom: 16%;
     transform: translateX(-50%);
 }
 
 .eevee-ne::after {
-    left: 18%;
-    bottom: 21%;
+    left: 16%;
+    bottom: 20%;
 }
 
 .eevee-w::after {
-    right: 17%;
+    right: 16%;
     top: 50%;
     transform: translateY(-50%);
 }
 
 .eevee-e::after {
-    left: 17%;
+    left: 16%;
     top: 50%;
     transform: translateY(-50%);
 }
 
 .eevee-sw::after {
-    right: 18%;
-    top: 21%;
+    right: 16%;
+    top: 20%;
 }
 
 .eevee-s::after {
     left: 50%;
-    top: 17%;
+    top: 16%;
     transform: translateX(-50%);
 }
 
 .eevee-se::after {
-    left: 18%;
-    top: 21%;
+    left: 16%;
+    top: 20%;
 }
 
+/* Flechas entre la tarjeta y el centro */
 .eevee-nw .eevee-flecha,
 .eevee-n .eevee-flecha,
 .eevee-w .eevee-flecha,
@@ -1362,22 +1347,6 @@ button {
 .eevee-s .eevee-flecha,
 .eevee-se .eevee-flecha {
     order: 1;
-}
-
-.eevee-n .eevee-flecha {
-    margin-top: -3px;
-}
-
-.eevee-s .eevee-flecha {
-    margin-bottom: -3px;
-}
-
-.eevee-w .eevee-flecha {
-    margin-right: -2px;
-}
-
-.eevee-e .eevee-flecha {
-    margin-left: -2px;
 }
 
 .eevee-nw .eevee-flecha {
@@ -1396,53 +1365,96 @@ button {
     margin-right: -4px;
 }
 
-.eevee-nw::before,
-.eevee-n::before,
-.eevee-ne::before,
-.eevee-w::before,
-.eevee-e::before,
-.eevee-sw::before,
-.eevee-s::before,
-.eevee-se::before {
-    pointer-events: none;
+.eevee-n .eevee-flecha {
+    margin-top: -4px;
+}
+
+.eevee-s .eevee-flecha {
+    margin-bottom: -4px;
+}
+
+/* Etiquetas de condiciones, fuera del flujo */
+.eevee-nw .evolucion-condicion {
+    right: 1px;
+    bottom: 7px;
+}
+
+.eevee-n .evolucion-condicion {
+    right: 50%;
+    bottom: 5px;
+    transform: translateX(50%);
+}
+
+.eevee-ne .evolucion-condicion {
+    left: 1px;
+    bottom: 7px;
+}
+
+.eevee-w .evolucion-condicion {
+    left: 1px;
+    bottom: 4px;
+}
+
+.eevee-e .evolucion-condicion {
+    right: 1px;
+    bottom: 4px;
+}
+
+.eevee-sw .evolucion-condicion {
+    right: 1px;
+    top: 7px;
+}
+
+.eevee-s .evolucion-condicion {
+    right: 50%;
+    top: 5px;
+    transform: translateX(50%);
+}
+
+.eevee-se .evolucion-condicion {
+    left: 1px;
+    top: 7px;
 }
 
 @media (max-width: 460px) {
     .evolucion-eevee {
         min-width: 410px;
-        grid-template-columns: repeat(3, minmax(122px, 1fr));
-        grid-template-rows: repeat(3, minmax(136px, auto));
-        min-height: 414px;
-        padding: 5px;
+        height: 432px;
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
+        grid-template-rows: repeat(3, 141px);
+        padding: 4px;
     }
 
     .eevee-centro .evolucion-pokemon {
-        width: 102px;
-        min-width: 102px;
-        min-height: 114px;
+        width: 100px;
+        min-width: 100px;
+        min-height: 112px;
     }
 
     .eevee-centro .evolucion-pokemon img {
-        width: 76px;
-        height: 76px;
+        width: 74px;
+        height: 74px;
     }
 
     .eevee-rama .evolucion-pokemon {
-        width: 82px;
-        min-width: 82px;
-        min-height: 94px;
+        width: 80px;
+        min-width: 80px;
+        min-height: 92px;
     }
 
     .eevee-rama .evolucion-pokemon img {
-        width: 58px;
-        height: 58px;
+        width: 56px;
+        height: 56px;
     }
 
     .eevee-contenido .evolucion-condicion {
-        max-width: 94px;
-        font-size: 8px;
+        width: min(88px, calc(100% - 6px));
+        max-width: 88px;
+        padding: 3px 5px;
+        font-size: 7.5px;
     }
 }
+
 .efectividad {
     display: grid;
     gap: 9px;
