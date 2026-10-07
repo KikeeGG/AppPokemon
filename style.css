@@ -1043,84 +1043,145 @@ button {
 .evolucion-eevee {
     position: relative;
     display: grid;
-    grid-template-columns: repeat(3, minmax(104px, 1fr));
-    grid-template-rows: repeat(3, minmax(112px, auto));
-    gap: 6px;
+    grid-template-columns: repeat(3, minmax(130px, 1fr));
+    grid-template-rows: repeat(3, minmax(145px, auto));
+    gap: 4px;
     width: 100%;
-    min-width: 360px;
-    min-height: 350px;
+    min-width: 430px;
+    min-height: 440px;
     margin-inline: auto;
-    padding: 6px;
+    padding: 8px;
     overflow: hidden;
 }
 
 .eevee-centro {
     position: relative;
-    z-index: 4;
+    z-index: 10;
     grid-column: 2;
     grid-row: 2;
     display: grid;
     place-items: center;
+    min-width: 0;
+}
+
+.eevee-centro::before {
+    position: absolute;
+    content: "";
+    width: 145px;
+    height: 145px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+    filter: blur(30px);
+    opacity: 0.75;
+    pointer-events: none;
 }
 
 .eevee-centro .evolucion-pokemon {
-    width: 104px;
-    min-width: 104px;
-    min-height: 112px;
-    border-color: color-mix(in srgb, var(--accent) 55%, white);
-    background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 20%, rgba(255,255,255,.14)), rgba(255,255,255,.05));
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 10px 28px rgba(0,0,0,.16), 0 0 0 1px color-mix(in srgb, var(--accent) 16%, transparent);
+    position: relative;
+    z-index: 2;
+    width: 112px;
+    min-width: 112px;
+    min-height: 122px;
+    border-color: color-mix(in srgb, var(--accent) 58%, white);
+    background:
+        linear-gradient(
+            145deg,
+            color-mix(in srgb, var(--accent) 20%, rgba(255, 255, 255, 0.14)),
+            rgba(255, 255, 255, 0.045)
+        );
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 12px 30px rgba(0, 0, 0, 0.18),
+        0 0 0 1px color-mix(in srgb, var(--accent) 17%, transparent);
+}
+
+.eevee-centro .evolucion-pokemon img {
+    width: 82px;
+    height: 82px;
 }
 
 .eevee-rama {
     position: relative;
-    z-index: 3;
-    display: grid;
-    place-items: center;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     min-width: 0;
-    align-content: center;
-    gap: 3px;
+    min-height: 0;
+    gap: 6px;
+}
+
+.eevee-rama::before {
+    position: absolute;
+    z-index: -1;
+    content: "";
+    width: 42%;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.18),
+        transparent
+    );
+}
+
+.eevee-rama::after {
+    position: absolute;
+    z-index: -1;
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--accent) 40%, rgba(255, 255, 255, 0.20));
+    box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 .eevee-rama .evolucion-pokemon {
-    width: 94px;
-    min-width: 94px;
-    min-height: 101px;
+    width: 88px;
+    min-width: 88px;
+    min-height: 100px;
+    padding: 6px 5px 8px;
+    border-radius: 18px;
+    border-color: rgba(255, 255, 255, 0.12);
 }
 
 .eevee-rama .evolucion-pokemon img {
-    width: 62px;
-    height: 62px;
-}
-
-.eevee-flecha {
-    display: grid;
-    place-items: center;
-    width: 24px;
-    height: 24px;
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 50%;
-    color: rgba(255,255,255,.84);
-    background: rgba(255,255,255,.07);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    font-size: 13px;
-    line-height: 1;
+    width: 64px;
+    height: 64px;
 }
 
 .eevee-contenido {
     display: grid;
     justify-items: center;
-    gap: 3px;
+    gap: 4px;
+    min-width: 0;
+    max-width: 104px;
 }
 
 .eevee-contenido .evolucion-condicion {
-    max-width: 100px;
+    max-width: 102px;
+    font-size: 9px;
 }
 
-.eevee-conexiones {
-    display: none;
+.eevee-flecha {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    flex: 0 0 25px;
+    width: 25px;
+    height: 25px;
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.88);
+    background: rgba(255, 255, 255, 0.075);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.10),
+        0 5px 15px rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-size: 12px;
+    line-height: 1;
 }
 
 .eevee-nw {
@@ -1163,6 +1224,178 @@ button {
     grid-row: 3;
 }
 
+/* Orientación y posición de cada conexión hacia Eevee */
+.eevee-nw {
+    flex-direction: row;
+}
+
+.eevee-n {
+    flex-direction: column;
+}
+
+.eevee-ne {
+    flex-direction: row-reverse;
+}
+
+.eevee-w {
+    flex-direction: row;
+}
+
+.eevee-e {
+    flex-direction: row-reverse;
+}
+
+.eevee-sw {
+    flex-direction: row;
+}
+
+.eevee-s {
+    flex-direction: column-reverse;
+}
+
+.eevee-se {
+    flex-direction: row-reverse;
+}
+
+.eevee-nw::before,
+.eevee-ne::before,
+.eevee-sw::before,
+.eevee-se::before {
+    width: 48%;
+    height: 1px;
+}
+
+.eevee-nw::before {
+    transform: rotate(33deg);
+}
+
+.eevee-ne::before {
+    transform: rotate(-33deg);
+}
+
+.eevee-sw::before {
+    transform: rotate(-33deg);
+}
+
+.eevee-se::before {
+    transform: rotate(33deg);
+}
+
+.eevee-n::before,
+.eevee-s::before {
+    width: 1px;
+    height: 48%;
+}
+
+.eevee-w::before,
+.eevee-e::before {
+    width: 48%;
+    height: 1px;
+}
+
+.eevee-n::before {
+    transform: none;
+}
+
+.eevee-s::before {
+    transform: none;
+}
+
+.eevee-w::before,
+.eevee-e::before {
+    transform: none;
+}
+
+.eevee-nw::after {
+    right: 18%;
+    bottom: 21%;
+}
+
+.eevee-n::after {
+    left: 50%;
+    bottom: 17%;
+    transform: translateX(-50%);
+}
+
+.eevee-ne::after {
+    left: 18%;
+    bottom: 21%;
+}
+
+.eevee-w::after {
+    right: 17%;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.eevee-e::after {
+    left: 17%;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.eevee-sw::after {
+    right: 18%;
+    top: 21%;
+}
+
+.eevee-s::after {
+    left: 50%;
+    top: 17%;
+    transform: translateX(-50%);
+}
+
+.eevee-se::after {
+    left: 18%;
+    top: 21%;
+}
+
+.eevee-nw .eevee-flecha,
+.eevee-n .eevee-flecha,
+.eevee-w .eevee-flecha,
+.eevee-sw .eevee-flecha {
+    order: 2;
+}
+
+.eevee-ne .eevee-flecha,
+.eevee-e .eevee-flecha,
+.eevee-s .eevee-flecha,
+.eevee-se .eevee-flecha {
+    order: 1;
+}
+
+.eevee-n .eevee-flecha {
+    margin-top: -3px;
+}
+
+.eevee-s .eevee-flecha {
+    margin-bottom: -3px;
+}
+
+.eevee-w .eevee-flecha {
+    margin-right: -2px;
+}
+
+.eevee-e .eevee-flecha {
+    margin-left: -2px;
+}
+
+.eevee-nw .eevee-flecha {
+    margin-left: -4px;
+}
+
+.eevee-ne .eevee-flecha {
+    margin-right: -4px;
+}
+
+.eevee-sw .eevee-flecha {
+    margin-left: -4px;
+}
+
+.eevee-se .eevee-flecha {
+    margin-right: -4px;
+}
+
 .eevee-nw::before,
 .eevee-n::before,
 .eevee-ne::before,
@@ -1171,9 +1404,45 @@ button {
 .eevee-sw::before,
 .eevee-s::before,
 .eevee-se::before {
-    display: none;
+    pointer-events: none;
 }
 
+@media (max-width: 460px) {
+    .evolucion-eevee {
+        min-width: 410px;
+        grid-template-columns: repeat(3, minmax(122px, 1fr));
+        grid-template-rows: repeat(3, minmax(136px, auto));
+        min-height: 414px;
+        padding: 5px;
+    }
+
+    .eevee-centro .evolucion-pokemon {
+        width: 102px;
+        min-width: 102px;
+        min-height: 114px;
+    }
+
+    .eevee-centro .evolucion-pokemon img {
+        width: 76px;
+        height: 76px;
+    }
+
+    .eevee-rama .evolucion-pokemon {
+        width: 82px;
+        min-width: 82px;
+        min-height: 94px;
+    }
+
+    .eevee-rama .evolucion-pokemon img {
+        width: 58px;
+        height: 58px;
+    }
+
+    .eevee-contenido .evolucion-condicion {
+        max-width: 94px;
+        font-size: 8px;
+    }
+}
 .efectividad {
     display: grid;
     gap: 9px;
