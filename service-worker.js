@@ -1,4 +1,4 @@
-const CACHE_NAME = "pokedex-v8";
+const CACHE_NAME = "pokedex-v9-v2";
 
 const ARCHIVOS = [
     "./",
