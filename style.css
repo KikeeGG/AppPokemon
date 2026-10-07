@@ -1354,3 +1354,668 @@ footer strong {
         transition: none;
     }
 }
+
+/* =========================================================
+   POKÉDEX V2 — APPLE / LIQUID GLASS VISUAL LAYER
+   Mantiene la estructura y lógica de la v1.
+   ========================================================= */
+
+:root {
+    --accent: #7aa7ff;
+    --texto: #ffffff;
+    --texto-suave: rgba(255, 255, 255, 0.68);
+    --texto-muy-suave: rgba(255, 255, 255, 0.42);
+    --cristal: rgba(255, 255, 255, 0.085);
+    --cristal-fuerte: rgba(255, 255, 255, 0.14);
+    --borde: rgba(255, 255, 255, 0.16);
+    --sombra: rgba(0, 0, 0, 0.30);
+}
+
+body {
+    background: #0a0f18;
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "SF Pro Display",
+        "SF Pro Text",
+        "Helvetica Neue",
+        Arial,
+        sans-serif;
+}
+
+html {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.24) transparent;
+}
+
+.fondo-pokemon {
+    inset: -14%;
+    opacity: 0.24;
+    filter: blur(42px) saturate(1.22);
+    transform: scale(1.10);
+    transition:
+        background-image 0.65s ease,
+        opacity 0.65s ease,
+        filter 0.65s ease;
+}
+
+.fondo-desenfoque {
+    backdrop-filter: blur(13px) saturate(1.08);
+    -webkit-backdrop-filter: blur(13px) saturate(1.08);
+}
+
+.fondo-oscuro {
+    background:
+        radial-gradient(
+            circle at 50% 7%,
+            color-mix(in srgb, var(--accent) 18%, transparent),
+            transparent 34%
+        ),
+        linear-gradient(
+            180deg,
+            rgba(5, 10, 18, 0.18),
+            rgba(5, 10, 18, 0.78) 86%
+        );
+}
+
+.app {
+    width: min(100%, 640px);
+    padding: calc(18px + env(safe-area-inset-top)) 16px calc(34px + env(safe-area-inset-bottom));
+}
+
+.cabecera {
+    margin-bottom: 12px;
+    padding: 2px 0;
+}
+
+.marca {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.95px;
+}
+
+.buscador-wrap {
+    position: sticky;
+    top: max(8px, env(safe-area-inset-top));
+    z-index: 35;
+    padding-bottom: 9px;
+}
+
+.buscador {
+    min-height: 50px;
+    padding: 4px 5px 4px 13px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 17px;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.15),
+            rgba(255, 255, 255, 0.065)
+        );
+    box-shadow:
+        0 16px 34px rgba(0, 0, 0, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.13);
+    backdrop-filter: blur(34px) saturate(1.20);
+    -webkit-backdrop-filter: blur(34px) saturate(1.20);
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
+
+.buscador:focus-within {
+    border-color: color-mix(in srgb, var(--accent) 62%, white);
+    box-shadow:
+        0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent),
+        0 18px 42px rgba(0, 0, 0, 0.20),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.buscador-icono {
+    display: grid;
+    place-items: center;
+    width: 25px;
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 20px;
+    line-height: 1;
+}
+
+.buscador input {
+    font-size: 15px;
+    letter-spacing: -0.1px;
+}
+
+.buscar-boton {
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 13px;
+    color: #101722;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow:
+        0 5px 16px rgba(0, 0, 0, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.80);
+    transition: transform 0.16s ease, background 0.16s ease;
+}
+
+.buscar-boton:hover {
+    background: #ffffff;
+    transform: scale(1.02);
+}
+
+.buscar-boton:active {
+    transform: scale(0.97);
+}
+
+.limpiar-busqueda {
+    background: rgba(255, 255, 255, 0.11);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.sugerencias {
+    top: calc(100% - 1px);
+    padding: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 18px;
+    background: rgba(18, 24, 35, 0.80);
+    box-shadow:
+        0 22px 50px rgba(0, 0, 0, 0.30),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(30px) saturate(1.15);
+    -webkit-backdrop-filter: blur(30px) saturate(1.15);
+}
+
+.sugerencia {
+    min-height: 44px;
+    border-radius: 13px;
+    transition: background 0.16s ease, transform 0.16s ease;
+}
+
+.sugerencia:hover,
+.sugerencia:focus-visible {
+    background: rgba(255, 255, 255, 0.09);
+    transform: translateX(1px);
+}
+
+.estado {
+    margin: 2px auto 10px;
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.error {
+    color: rgba(255, 215, 222, 0.92);
+}
+
+.tarjeta {
+    border: 1px solid rgba(255, 255, 255, 0.145);
+    border-radius: 27px;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.105),
+            rgba(255, 255, 255, 0.045)
+        );
+    box-shadow:
+        0 18px 50px rgba(0, 0, 0, 0.20),
+        inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    backdrop-filter: blur(26px) saturate(1.08);
+    -webkit-backdrop-filter: blur(26px) saturate(1.08);
+}
+
+.hero {
+    min-height: 250px;
+    margin-bottom: 13px;
+    padding: 21px 19px 16px 21px;
+    background:
+        radial-gradient(
+            circle at 82% 35%,
+            color-mix(in srgb, var(--accent) 18%, transparent),
+            transparent 36%
+        ),
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.10),
+            rgba(255, 255, 255, 0.04)
+        );
+}
+
+.hero::before {
+    top: -125px;
+    right: -115px;
+    width: 310px;
+    height: 310px;
+    opacity: 0.70;
+    filter: blur(42px);
+}
+
+.hero-texto {
+    transform: none;
+}
+
+.numero-pokedex {
+    font-size: 10px;
+    letter-spacing: 1.1px;
+}
+
+.shiny-boton {
+    width: 26px;
+    height: 26px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+
+.shiny-boton:hover,
+.shiny-boton.activo {
+    background: color-mix(in srgb, var(--accent) 12%, rgba(255, 255, 255, 0.07));
+}
+
+.hero h1 {
+    margin-top: 2px;
+    font-size: clamp(38px, 9vw, 56px);
+    font-weight: 650;
+    letter-spacing: -2.05px;
+}
+
+.categoria {
+    margin-top: 8px;
+    color: rgba(255, 255, 255, 0.63);
+    font-size: 12px;
+}
+
+.tipos {
+    gap: 6px;
+    margin-top: 13px;
+}
+
+.tipo-chip {
+    padding: 7px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    background:
+        linear-gradient(
+            145deg,
+            color-mix(in srgb, var(--tipo-color, #6f7c91) 64%, transparent),
+            color-mix(in srgb, var(--tipo-color, #6f7c91) 40%, transparent)
+        );
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.13),
+        0 5px 16px rgba(0, 0, 0, 0.10);
+    font-size: 9px;
+}
+
+.hero-sprite-wrap {
+    min-width: 0;
+}
+
+.hero-sprite {
+    filter:
+        drop-shadow(0 16px 16px rgba(0, 0, 0, 0.20))
+        drop-shadow(0 0 26px color-mix(in srgb, var(--accent) 22%, transparent));
+}
+
+.bloque {
+    margin-bottom: 13px;
+    padding: 18px;
+}
+
+.titulo-bloque {
+    margin-bottom: 14px;
+    padding-bottom: 11px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.titulo-bloque span,
+.leyenda-stats span {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    color: rgba(255, 255, 255, 0.86);
+}
+
+.titulo-bloque small {
+    margin-top: 4px;
+    color: rgba(255, 255, 255, 0.43);
+    font-size: 9px;
+}
+
+.habilidades {
+    gap: 8px;
+}
+
+.habilidad {
+    min-height: 70px;
+    padding: 13px;
+    border: 1px solid rgba(255, 255, 255, 0.115);
+    border-radius: 18px;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.095),
+            rgba(255, 255, 255, 0.035)
+        );
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    transition:
+        transform 0.18s ease,
+        border-color 0.18s ease,
+        background 0.18s ease;
+}
+
+.habilidad:hover,
+.habilidad:focus-visible {
+    border-color: color-mix(in srgb, var(--accent) 38%, rgba(255, 255, 255, 0.12));
+    background:
+        linear-gradient(
+            145deg,
+            color-mix(in srgb, var(--accent) 10%, rgba(255, 255, 255, 0.07)),
+            rgba(255, 255, 255, 0.035)
+        );
+    transform: translateY(-1px);
+}
+
+.habilidad-etiqueta {
+    color: rgba(255, 255, 255, 0.42);
+    font-size: 8px;
+    letter-spacing: 0.55px;
+}
+
+.habilidad strong {
+    margin-top: 5px;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 13px;
+}
+
+.habilidad.oculta {
+    border-style: dashed;
+}
+
+.leyenda-stats {
+    margin-bottom: 14px;
+    padding-bottom: 11px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stats {
+    gap: 12px;
+}
+
+.stat-fila {
+    gap: 7px;
+    padding: 2px 0 10px;
+}
+
+.stat-cabecera {
+    gap: 8px;
+}
+
+.stat-nombre {
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.stat-rango {
+    color: rgba(255, 255, 255, 0.36);
+    font-size: 9px;
+}
+
+.stat-base {
+    min-width: 31px;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 12px;
+}
+
+.stat-barra {
+    height: 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.10);
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.16);
+    overflow: hidden;
+}
+
+.stat-relleno {
+    border-radius: inherit;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.20);
+}
+
+.stat-fuerte .stat-relleno {
+    background: linear-gradient(90deg, #54d678, #7ee49a);
+}
+
+.stat-mediocre .stat-relleno {
+    background: linear-gradient(90deg, #f0c849, #f7d970);
+}
+
+.stat-mala .stat-relleno {
+    background: linear-gradient(90deg, #eb6262, #f58b8b);
+}
+
+.total-stats {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    padding: 8px 11px;
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.92);
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    font-size: 13px;
+}
+
+.evoluciones {
+    gap: 10px;
+}
+
+.evolucion-linea {
+    gap: 6px;
+    justify-content: flex-start;
+    padding: 5px 1px 9px;
+}
+
+.evolucion-pokemon {
+    min-height: 112px;
+    border: 1px solid rgba(255, 255, 255, 0.115);
+    border-radius: 20px;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.09),
+            rgba(255, 255, 255, 0.03)
+        );
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 9px 24px rgba(0, 0, 0, 0.10);
+}
+
+.evolucion-pokemon.seleccionado {
+    border-color: color-mix(in srgb, var(--accent) 58%, white);
+    background:
+        linear-gradient(
+            145deg,
+            color-mix(in srgb, var(--accent) 14%, rgba(255, 255, 255, 0.08)),
+            rgba(255, 255, 255, 0.03)
+        );
+    box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent),
+        0 12px 30px color-mix(in srgb, var(--accent) 13%, rgba(0, 0, 0, 0.22));
+}
+
+.evolucion-pokemon:hover {
+    transform: translateY(-2px);
+}
+
+.evolucion-pokemon img {
+    filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.18));
+}
+
+.evolucion-flecha {
+    flex-basis: 58px;
+}
+
+.flecha-linea {
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 27px;
+}
+
+.evolucion-condicion {
+    border-color: rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.055);
+    font-size: 10px;
+}
+
+.evolucion-arbol {
+    justify-content: flex-start;
+    padding: 7px 1px 12px;
+}
+
+.arbol-hijos {
+    gap: 10px;
+}
+
+.arbol-hijos::before,
+.arbol-rama::before {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.eevee-flecha {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.075);
+}
+
+.grupo-efectividad {
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    border-radius: 20px;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.075),
+            rgba(255, 255, 255, 0.025)
+        );
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.grupo-cabecera {
+    margin-bottom: 9px;
+}
+
+.grupo-icono {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.grupo-tipos {
+    gap: 6px;
+}
+
+.habilidad-detalle {
+    margin-bottom: 13px;
+    border-radius: 27px;
+}
+
+.habilidad-descripcion {
+    border-radius: 20px;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.085),
+            rgba(255, 255, 255, 0.028)
+        );
+}
+
+.poseedor-pokemon {
+    border-radius: 17px;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.075),
+            rgba(255, 255, 255, 0.025)
+        );
+}
+
+footer {
+    padding-top: 18px;
+    color: rgba(255, 255, 255, 0.34);
+}
+
+@media (min-width: 700px) {
+    .app {
+        width: min(100%, 660px);
+    }
+
+    .hero {
+        grid-template-columns: minmax(0, 1fr) 180px;
+        min-height: 260px;
+    }
+
+    .hero-sprite {
+        width: 170px;
+        height: 170px;
+    }
+
+    .efectividad {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 520px) {
+    .app {
+        padding-right: 13px;
+        padding-left: 13px;
+    }
+
+    .bloque {
+        padding: 16px;
+    }
+
+    .hero {
+        padding-left: 17px;
+        padding-right: 13px;
+    }
+}
+
+@media (max-width: 390px) {
+    .habilidades {
+        grid-template-columns: 1fr;
+    }
+
+    .efectividad {
+        grid-template-columns: 1fr;
+    }
+
+    .hero {
+        grid-template-columns: minmax(0, 1fr) 122px;
+        min-height: 215px;
+    }
+
+    .hero h1 {
+        font-size: clamp(32px, 10vw, 42px);
+    }
+
+    .hero-sprite {
+        width: 118px;
+        height: 118px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .buscador,
+    .buscar-boton,
+    .sugerencia,
+    .habilidad,
+    .evolucion-pokemon {
+        transition: none;
+    }
+}
+
+@supports not ((backdrop-filter: blur(1px))) {
+    .tarjeta,
+    .buscador,
+    .sugerencias,
+    .habilidad-descripcion,
+    .poseedor-pokemon {
+        background: rgba(21, 28, 41, 0.96);
+    }
+}
