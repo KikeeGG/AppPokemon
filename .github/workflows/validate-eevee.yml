@@ -61,7 +61,7 @@ jobs:
               cardCount: cards.length,
               overlaps,
               positions: branches.map(b => ({className:b.className, rect:rect(b)})),
-              shinyVisible: await Promise.resolve(!!document.querySelector('#shinyBoton')),
+              shinyVisible: !!document.querySelector('#shinyBoton'),
               title: document.title
             };
           });
