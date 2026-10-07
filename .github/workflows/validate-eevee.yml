@@ -23,7 +23,7 @@ jobs:
       - name: Test Eevee layout
         run: |
           sleep 2
-          cat > /tmp/test.mjs <<'EOF'
+          cat > test-eevee.mjs <<'EOF
           import { chromium } from 'playwright';
 
           const browser = await chromium.launch({headless:true});
@@ -79,7 +79,7 @@ jobs:
 
           await browser.close();
           EOF
-          node /tmp/test.mjs
+          node test-eevee.mjs
       - name: Upload screenshot
         uses: actions/upload-artifact@v4
         with:
