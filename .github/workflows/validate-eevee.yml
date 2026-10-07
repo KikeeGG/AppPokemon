@@ -1,0 +1,84 @@
+name: Validate Eevee V2
+
+on:
+  push:
+    branches: ["v2-eevee-ordenado"]
+  workflow_dispatch:
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install browser
+        run: npx --yes playwright@1.56.1 install --with-deps chromium
+      - name: Start server
+        run: python3 -m http.server 4173 >/tmp/server.log 2>&1 &
+      - name: Test Eevee layout
+        run: |
+          sleep 2
+          cat > /tmp/test.mjs <<'EOF'
+          import { chromium } from 'playwright';
+
+          const browser = await chromium.launch({headless:true});
+          const page = await browser.newPage({viewport:{width:390,height:844}, deviceScaleFactor:1});
+          const errors = [];
+          page.on('pageerror', e => errors.push('pageerror: ' + e.message));
+          page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
+
+          await page.goto('http://127.0.0.1:4173/', {waitUntil:'domcontentloaded', timeout:30000});
+          await page.waitForTimeout(2500);
+
+          const input = page.locator('#buscador');
+          await input.fill('eevee');
+          await page.locator('#busquedaForm').evaluate(form => form.requestSubmit());
+          await page.waitForFunction(() => document.querySelectorAll('.evolucion-eevee .eevee-rama').length === 8, null, {timeout:30000});
+
+          const result = await page.evaluate(() => {
+            const root = document.querySelector('.evolucion-eevee');
+            const center = document.querySelector('.eevee-centro .evolucion-pokemon');
+            const branches = [...document.querySelectorAll('.evolucion-eevee .eevee-rama')];
+            const cards = [...document.querySelectorAll('.evolucion-eevee .evolucion-pokemon')];
+            const rect = el => {
+              const r = el.getBoundingClientRect();
+              return {left:r.left, top:r.top, right:r.right, bottom:r.bottom, width:r.width, height:r.height};
+            };
+            const overlaps = [];
+            for (let i=0;i<cards.length;i++) {
+              for (let j=i+1;j<cards.length;j++) {
+                const a=rect(cards[i]), b=rect(cards[j]);
+                const overlap=a.left<b.right && a.right>b.left && a.top<b.bottom && a.bottom>b.top;
+                if(overlap) overlaps.push([i,j]);
+              }
+            }
+            return {
+              root: rect(root),
+              center: rect(center),
+              branchCount: branches.length,
+              cardCount: cards.length,
+              overlaps,
+              positions: branches.map(b => ({className:b.className, rect:rect(b)})),
+              shinyVisible: await Promise.resolve(!!document.querySelector('#shinyBoton')),
+              title: document.title
+            };
+          });
+
+          console.log(JSON.stringify(result, null, 2));
+          await page.screenshot({path:'/tmp/eevee.png', fullPage:true});
+
+          if (result.branchCount !== 8) throw new Error('Expected 8 Eevee evolutions');
+          if (result.cardCount !== 9) throw new Error('Expected Eevee + 8 evolutions');
+          if (result.overlaps.length) throw new Error('Evolution cards overlap: ' + JSON.stringify(result.overlaps));
+          if (errors.length) throw new Error(errors.join(' | '));
+
+          await browser.close();
+          EOF
+          node /tmp/test.mjs
+      - name: Upload screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: eevee-v2-screenshot
+          path: /tmp/eevee.png
