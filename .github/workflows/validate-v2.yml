@@ -1,0 +1,58 @@
+name: Validate v2
+
+on:
+  push:
+    branches: ["v2-apple-liquid-glass"]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: JavaScript syntax
+        run: node --check app.js
+      - name: Required files
+        run: |
+          test -f index.html
+          test -f style.css
+          test -f app.js
+          test -f manifest.json
+          test -f service-worker.js
+      - name: Local server smoke test
+        run: |
+          python3 -m http.server 4173 >/tmp/server.log 2>&1 &
+          SERVER_PID=$!
+          trap "kill $SERVER_PID" EXIT
+          sleep 2
+          curl --fail --silent http://127.0.0.1:4173/index.html >/tmp/index.html
+          grep -q 'app.js' /tmp/index.html
+          grep -q 'style.css' /tmp/index.html
+      - name: Browser smoke test
+        run: |
+          npx --yes playwright@1.56.1 install --with-deps chromium
+          cat > /tmp/smoke.mjs <<'EOF'
+          import { chromium } from 'playwright';
+          const browser = await chromium.launch({headless:true});
+          const page = await browser.newPage({viewport:{width:390,height:844}, serviceWorkers:'allow'});
+          const errors = [];
+          page.on('pageerror', e => errors.push(String(e)));
+          page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+          await page.goto('http://127.0.0.1:4173/', {waitUntil:'networkidle', timeout:30000});
+          await page.waitForTimeout(4000);
+          const title = await page.title();
+          const pokemon = await page.locator('#nombrePokemon').textContent();
+          const search = await page.locator('#buscador').isVisible();
+          const hero = await page.locator('#ficha.visible .hero').count();
+          const abilities = await page.locator('#habilidades .habilidad').count();
+          const stats = await page.locator('#stats .stat-fila').count();
+          if (!search || hero !== 1 || abilities < 1 || stats < 1) {
+            throw new Error(JSON.stringify({title, pokemon, search, hero, abilities, stats}));
+          }
+          if (errors.length) throw new Error('Browser errors: ' + errors.join(' | '));
+          await browser.close();
+          EOF
+          node /tmp/smoke.mjs
