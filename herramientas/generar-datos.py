@@ -70,6 +70,13 @@ for d in cargar("type/*/index.json"):
             "dobleA": nombres("double_damage_to"),
         }
 
+# Todos los movimientos: nombre en español, tipo y clase (f=físico, e=especial, s=estado)
+ataques = {}
+for d in cargar("move/*/index.json"):
+    if d["type"]["name"] in TIPOS:
+        ataques[d["name"]] = [es(d["names"]) or d["name"].replace("-", " ").title(),
+                              d["type"]["name"], {"physical": "f", "special": "e", "status": "s"}[d["damage_class"]["name"]]]
+
 datos = {
     "v": 1,
     "tipos": tipos,
@@ -78,6 +85,7 @@ datos = {
     "habilidades": habilidades,
     "objetos": mapa("item"),
     "movimientos": mapa("move"),
+    "ataques": dict(sorted(ataques.items())),
     "lugares": mapa("location"),
     "naturalezas": mapa("nature"),
 }

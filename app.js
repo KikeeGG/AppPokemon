@@ -243,7 +243,14 @@ function iniciarElementos() {
         "debilidades",
         "resistencias",
         "inmunidades",
-        "ofensivas"
+        "ofensivas",
+        "ataquesBloque",
+        "ataquesMetodos",
+        "ataquesGens",
+        "ataquesJuegos",
+        "ataquesLista",
+        "ataquesVacio",
+        "ataquesMas"
     ];
 
     ids.forEach(id => {
@@ -1243,6 +1250,218 @@ function mostrarPokemon(pokemon, species) {
     renderizarFormas(pokemon, species);
     renderizarHabilidades(pokemon);
     renderizarStats(pokemon.stats);
+    prepararAtaques(pokemon);
+}
+
+/* ---------- Ataques por generación ---------- */
+
+/* Juegos de cada generación. El último de cada lista es el que se muestra por defecto. */
+const GENERACIONES = [
+    { n: 1, romano: "I", juegos: [["red-blue", "Rojo/Azul"], ["yellow", "Amarillo"]] },
+    { n: 2, romano: "II", juegos: [["gold-silver", "Oro/Plata"], ["crystal", "Cristal"]] },
+    { n: 3, romano: "III", juegos: [["colosseum", "Colosseum"], ["xd", "XD"], ["ruby-sapphire", "Rubí/Zafiro"], ["firered-leafgreen", "Rojo Fuego/Verde Hoja"], ["emerald", "Esmeralda"]] },
+    { n: 4, romano: "IV", juegos: [["diamond-pearl", "Diamante/Perla"], ["heartgold-soulsilver", "HeartGold/SoulSilver"], ["platinum", "Platino"]] },
+    { n: 5, romano: "V", juegos: [["black-white", "Negro/Blanco"], ["black-2-white-2", "Negro 2/Blanco 2"]] },
+    { n: 6, romano: "VI", juegos: [["x-y", "X/Y"], ["omega-ruby-alpha-sapphire", "Rubí Omega/Zafiro Alfa"]] },
+    { n: 7, romano: "VII", juegos: [["lets-go-pikachu-lets-go-eevee", "Let's Go"], ["sun-moon", "Sol/Luna"], ["ultra-sun-ultra-moon", "Ultrasol/Ultraluna"]] },
+    { n: 8, romano: "VIII", juegos: [["legends-arceus", "Leyendas Arceus"], ["brilliant-diamond-shining-pearl", "Diamante Brillante/Perla Reluciente"], ["sword-shield", "Espada/Escudo"]] },
+    { n: 9, romano: "IX", juegos: [["champions", "Champions"], ["scarlet-violet", "Escarlata/Púrpura"]] }
+];
+
+const METODOS_ATAQUE = [
+    { clave: "level-up", etiqueta: "Nivel", pildora: "" },
+    { clave: "machine", etiqueta: "MT/MO", pildora: "MT" },
+    { clave: "egg", etiqueta: "Huevo", pildora: "Huevo" },
+    { clave: "tutor", etiqueta: "Tutor", pildora: "Tutor" }
+];
+
+const CLASES_ATAQUE = { f: "Físico", e: "Especial", s: "Estado" };
+const ATAQUES_POR_PAGINA = 30;
+
+/* Preferencias que se mantienen al cambiar de Pokémon */
+const ataquesEstado = { metodo: "level-up", gen: null, juego: null, limite: ATAQUES_POR_PAGINA };
+let ataquesDisponibles = null;
+
+/* { metodo: { juego: [{ nombre, nivel }] } } */
+function indexarAtaques(pokemon) {
+    const indice = {};
+
+    for (const entrada of pokemon.moves || []) {
+        for (const detalle of entrada.version_group_details || []) {
+            const metodo = detalle.move_learn_method.name;
+            const juego = detalle.version_group.name;
+
+            if (!METODOS_ATAQUE.some(m => m.clave === metodo)) {
+                continue;
+            }
+
+            ((indice[metodo] ||= {})[juego] ||= []).push({
+                nombre: entrada.move.name,
+                nivel: detalle.level_learned_at || 0
+            });
+        }
+    }
+
+    return indice;
+}
+
+/* Generaciones (y juegos de cada una) con datos para un método */
+function generacionesConDatos(metodo) {
+    const porJuego = ataquesDisponibles?.[metodo] || {};
+
+    return GENERACIONES
+        .map(gen => ({ ...gen, juegos: gen.juegos.filter(([clave]) => porJuego[clave]?.length) }))
+        .filter(gen => gen.juegos.length);
+}
+
+function prepararAtaques(pokemon) {
+    ataquesDisponibles = indexarAtaques(pokemon);
+    ataquesEstado.limite = ATAQUES_POR_PAGINA;
+
+    const metodos = METODOS_ATAQUE.filter(m => generacionesConDatos(m.clave).length);
+
+    if (!metodos.length) {
+        elementos.ataquesBloque.hidden = true;
+        return;
+    }
+
+    elementos.ataquesBloque.hidden = false;
+
+    if (!metodos.some(m => m.clave === ataquesEstado.metodo)) {
+        ataquesEstado.metodo = metodos[0].clave;
+    }
+
+    renderizarAtaques();
+}
+
+function crearChipAtaque(texto, activo, alPulsar, etiquetaAria) {
+    const boton = document.createElement("button");
+    boton.type = "button";
+    boton.className = "forma-chip" + (activo ? " activa" : "");
+    boton.textContent = texto;
+    boton.setAttribute("aria-pressed", activo ? "true" : "false");
+
+    if (etiquetaAria) {
+        boton.setAttribute("aria-label", etiquetaAria);
+    }
+
+    boton.addEventListener("click", alPulsar);
+    return boton;
+}
+
+function renderizarAtaques() {
+    const metodo = ataquesEstado.metodo;
+    const generaciones = generacionesConDatos(metodo);
+
+    /* Generación elegida: la guardada si existe para este Pokémon, si no la más reciente */
+    let gen = generaciones.find(g => g.n === ataquesEstado.gen) || generaciones.at(-1);
+    ataquesEstado.gen = gen.n;
+
+    const juego = gen.juegos.find(([clave]) => clave === ataquesEstado.juego) || gen.juegos.at(-1);
+    ataquesEstado.juego = juego[0];
+
+    /* Método */
+    elementos.ataquesMetodos.innerHTML = "";
+    const metodos = METODOS_ATAQUE.filter(m => generacionesConDatos(m.clave).length);
+
+    if (metodos.length > 1) {
+        metodos.forEach(m => elementos.ataquesMetodos.appendChild(
+            crearChipAtaque(m.etiqueta, m.clave === metodo, () => {
+                ataquesEstado.metodo = m.clave;
+                ataquesEstado.limite = ATAQUES_POR_PAGINA;
+                renderizarAtaques();
+            })
+        ));
+    }
+
+    elementos.ataquesMetodos.hidden = metodos.length < 2;
+
+    /* Generación */
+    elementos.ataquesGens.innerHTML = "";
+    generaciones.forEach(g => elementos.ataquesGens.appendChild(
+        crearChipAtaque(`Gen ${g.romano}`, g.n === gen.n, () => {
+            ataquesEstado.gen = g.n;
+            ataquesEstado.juego = null;
+            ataquesEstado.limite = ATAQUES_POR_PAGINA;
+            renderizarAtaques();
+        }, `Generación ${g.n}`)
+    ));
+
+    /* Juego (solo si la generación tiene más de uno con datos) */
+    elementos.ataquesJuegos.innerHTML = "";
+    gen.juegos.forEach(([clave, nombre]) => elementos.ataquesJuegos.appendChild(
+        crearChipAtaque(nombre, clave === juego[0], () => {
+            ataquesEstado.juego = clave;
+            ataquesEstado.limite = ATAQUES_POR_PAGINA;
+            renderizarAtaques();
+        })
+    ));
+    elementos.ataquesJuegos.hidden = gen.juegos.length < 2;
+
+    renderizarListaAtaques(ataquesDisponibles[metodo][juego[0]], metodo);
+}
+
+function crearFilaAtaque(ataque, metodo) {
+    const info = datos?.ataques?.[ataque.nombre];
+    const fila = document.createElement("li");
+    fila.className = "ataque-fila";
+
+    const cuando = document.createElement("span");
+    cuando.className = "ataque-cuando";
+
+    if (metodo === "level-up") {
+        cuando.textContent = ataque.nivel > 0 ? ataque.nivel : "Evo.";
+        cuando.setAttribute("aria-label", ataque.nivel > 0 ? `Nivel ${ataque.nivel}` : "Al evolucionar");
+    } else {
+        cuando.textContent = METODOS_ATAQUE.find(m => m.clave === metodo).pildora;
+        cuando.classList.add("ataque-cuando-texto");
+    }
+
+    const texto = document.createElement("span");
+    texto.className = "ataque-texto";
+
+    const nombre = document.createElement("strong");
+    nombre.textContent = info?.[0] || prettificar(ataque.nombre);
+    texto.appendChild(nombre);
+
+    if (info?.[2]) {
+        const clase = document.createElement("small");
+        clase.textContent = CLASES_ATAQUE[info[2]];
+        texto.appendChild(clase);
+    }
+
+    fila.append(cuando, texto);
+
+    if (info?.[1]) {
+        fila.appendChild(crearChipTipo(info[1]));
+    }
+
+    return fila;
+}
+
+function renderizarListaAtaques(lista, metodo) {
+    /* Por nivel (y, a igual nivel, por nombre); el resto, por nombre */
+    const nombreDe = a => datos?.ataques?.[a.nombre]?.[0] || a.nombre;
+    const ordenados = [...lista].sort((a, b) =>
+        (metodo === "level-up" ? a.nivel - b.nivel : 0) || nombreDe(a).localeCompare(nombreDe(b), "es")
+    );
+
+    elementos.ataquesLista.innerHTML = "";
+    elementos.ataquesVacio.hidden = ordenados.length > 0;
+
+    ordenados.slice(0, ataquesEstado.limite)
+        .forEach(a => elementos.ataquesLista.appendChild(crearFilaAtaque(a, metodo)));
+
+    const restantes = ordenados.length - ataquesEstado.limite;
+    elementos.ataquesMas.hidden = restantes <= 0;
+
+    if (restantes > 0) {
+        elementos.ataquesMas.textContent = `Mostrar los ${restantes} restantes`;
+        elementos.ataquesMas.onclick = () => {
+            ataquesEstado.limite = Infinity;
+            renderizarListaAtaques(lista, metodo);
+        };
+    }
 }
 
 function renderizarTiposPokemon(tiposPokemon) {
