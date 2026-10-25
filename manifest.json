@@ -1,7 +1,8 @@
 {
-    "name": "Pokédex",
-    "short_name": "Pokédex",
+    "name": "Ultraball",
+    "short_name": "Ultraball",
     "description": "Pokédex web conectada a PokéAPI",
+    "lang": "es",
     "start_url": "./",
     "scope": "./",
     "display": "standalone",
@@ -13,13 +14,13 @@
             "src": "icon-192.png",
             "sizes": "192x192",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "any"
         },
         {
             "src": "icon-512.png",
             "sizes": "512x512",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "any"
         }
     ]
 }

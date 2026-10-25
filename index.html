@@ -2,15 +2,17 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">    <meta name="theme-color" content="#233044">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="theme-color" content="#233044">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Pokédex">
+    <meta name="apple-mobile-web-app-title" content="Ultraball">
     <title>Ultraball</title>
     <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon-192.png" type="image/png">
     <link rel="apple-touch-icon" href="icon-180.png">
     <link rel="stylesheet" href="style.css">
-    
 </head>
 <body>
     <div class="fondo-pokemon" id="fondoPokemon"></div>
@@ -19,6 +21,9 @@
 
     <main class="app">
         <header class="cabecera">
+            <button type="button" class="atras-boton" id="atrasBoton" aria-label="Volver al anterior" hidden>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+            </button>
             <div>
                 <p class="marca"><strong>ULTRABALL</strong></p>
             </div>
@@ -31,7 +36,10 @@
                     id="buscador"
                     type="text"
                     inputmode="search"
-                    placeholder="Elige pokemon..."
+                    placeholder="Pokémon, habilidad o número..."
+                    enterkeyhint="search"
+                    autocapitalize="none"
+                    autocorrect="off"
                     aria-label="Buscar Pokémon"
                     spellcheck="false">
                 <button type="button" class="limpiar-busqueda" id="limpiarBusqueda" aria-label="Limpiar búsqueda">×</button>
@@ -57,16 +65,17 @@
                     <div class="tipos" id="tiposPokemon"></div>
                 </div>
                 <div class="hero-sprite-wrap">
-                    <img id="pokemonSprite" class="hero-sprite" src="" alt="Sprite del Pokémon">
+                    <img id="pokemonSprite" class="hero-sprite" alt="Sprite del Pokémon">
                 </div>
             </section>
+
+            <div class="formas" id="formas" aria-label="Formas del Pokémon"></div>
 
             <section class="bloque tarjeta">
                 <div class="titulo-bloque">
                     <div>
                         <span>HABILIDADES</span>
                         <small>Posibles que puede tener</small>
-
                     </div>
                 </div>
                 <div class="habilidades" id="habilidades"></div>
@@ -75,12 +84,9 @@
             <section class="bloque tarjeta">
                 <div class="leyenda-stats">
                 <span>STATS</span>
-
                 </div>
                 <div class="stats" id="stats"></div>
-                <br>
                 <div class="titulo-bloque">
-                    <br>
                     <strong class="total-stats" id="totalStats">0 <small>TOTAL</small></strong>
                 </div>
             </section>
@@ -105,43 +111,30 @@
 
                 <div class="efectividad">
                     <article class="grupo-efectividad grupo-debilidades">
-                        <div class="grupo-cabecera">
-                            <div>
-                                <strong>Debilidades</strong>
-                            </div>
-                            <span class="grupo-icono">💔​</span>
-                        </div>
+                        <header class="grupo-cabecera">
+                            <strong>Debilidades</strong>
+                        </header>
                         <div class="grupo-tipos" id="debilidades"></div>
                     </article>
 
                     <article class="grupo-efectividad grupo-resistencias">
-                        <div class="grupo-cabecera">
-                            <div>
-                                <strong>Resistencias</strong>
-                            </div>
-                            <span class="grupo-icono">​🛡️​</span>
-
-                        </div>
+                        <header class="grupo-cabecera">
+                            <strong>Resistencias</strong>
+                        </header>
                         <div class="grupo-tipos" id="resistencias"></div>
                     </article>
 
                     <article class="grupo-efectividad grupo-inmunidades">
-                        <div class="grupo-cabecera">
-                            <div>
-                                <strong>Inmunidades</strong>
-                            </div>
-                            <span class="grupo-icono">​​​​❌​​</span>
-                        </div>
+                        <header class="grupo-cabecera">
+                            <strong>Inmunidades</strong>
+                        </header>
                         <div class="grupo-tipos" id="inmunidades"></div>
                     </article>
 
                     <article class="grupo-efectividad grupo-ofensivas">
-                        <div class="grupo-cabecera">
-                            <div>
-                                <strong>Ventaja ofensiva</strong>
-                            </div>
-                            <span class="grupo-icono">​​🗡️​</span>
-                        </div>
+                        <header class="grupo-cabecera">
+                            <strong>Ventaja ofensiva</strong>
+                        </header>
                         <div class="grupo-tipos" id="ofensivas"></div>
                     </article>
                 </div>
