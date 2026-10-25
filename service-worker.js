@@ -1,35 +1,42 @@
-const CACHE_NAME = "pokedex-v8";
+"use strict";
+
+/* Ultraball · service worker
+   - Archivos de la app: red primero (siempre ves la última versión) y, si no hay red, caché.
+   - PokéAPI: caché inmediata + actualización en segundo plano (los Pokémon ya vistos funcionan sin conexión).
+   - Sprites: caché primero. */
+
+const CACHE_ESTATICO = "ultraball-estatico-v1";
+const CACHE_API = "ultraball-api-v1";
+const CACHE_IMAGENES = "ultraball-imagenes-v1";
+const CACHES_ACTUALES = [CACHE_ESTATICO, CACHE_API, CACHE_IMAGENES];
+
+const MAX_API = 800;
+const MAX_IMAGENES = 400;
+const ESPERA_RED_MS = 4000;
+
+const TIPOS = [
+    "normal", "fire", "water", "electric", "grass", "ice", "fighting", "poison", "ground",
+    "flying", "psychic", "bug", "rock", "ghost", "dragon", "dark", "steel", "fairy"
+];
 
 const ARCHIVOS = [
     "./",
     "./index.html",
     "./style.css",
     "./app.js",
+    "./datos.json",
     "./manifest.json",
-    "./assets/backgrounds/normal.gif",
-    "./assets/backgrounds/fire.gif",
-    "./assets/backgrounds/water.gif",
-    "./assets/backgrounds/electric.gif",
-    "./assets/backgrounds/grass.gif",
-    "./assets/backgrounds/ice.gif",
-    "./assets/backgrounds/fighting.gif",
-    "./assets/backgrounds/poison.gif",
-    "./assets/backgrounds/ground.gif",
-    "./assets/backgrounds/flying.gif",
-    "./assets/backgrounds/psychic.gif",
-    "./assets/backgrounds/bug.gif",
-    "./assets/backgrounds/rock.gif",
-    "./assets/backgrounds/ghost.gif",
-    "./assets/backgrounds/dragon.gif",
-    "./assets/backgrounds/dark.gif",
-    "./assets/backgrounds/steel.gif",
-    "./assets/backgrounds/fairy.gif"
+    "./icon-180.png",
+    "./icon-192.png",
+    "./icon-512.png",
+    ...TIPOS.map(tipo => `./assets/backgrounds/${tipo}.gif`)
 ];
 
 self.addEventListener("install", event => {
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(ARCHIVOS))
+        caches.open(CACHE_ESTATICO)
+            /* Cada archivo por separado: si falta uno (p. ej. un GIF) no se cae toda la instalación */
+            .then(cache => Promise.allSettled(ARCHIVOS.map(archivo => cache.add(archivo))))
             .then(() => self.skipWaiting())
     );
 });
@@ -39,27 +46,137 @@ self.addEventListener("activate", event => {
         caches.keys()
             .then(claves => Promise.all(
                 claves
-                    .filter(clave => clave !== CACHE_NAME)
+                    .filter(clave => !CACHES_ACTUALES.includes(clave))
                     .map(clave => caches.delete(clave))
             ))
             .then(() => self.clients.claim())
     );
 });
 
-self.addEventListener("fetch", event => {
-    const url = new URL(event.request.url);
+async function recortar(nombreCache, maximo) {
+    const cache = await caches.open(nombreCache);
+    const claves = await cache.keys();
 
-    if (url.origin !== self.location.origin) {
+    for (const clave of claves.slice(0, Math.max(0, claves.length - maximo))) {
+        await cache.delete(clave);
+    }
+}
+
+function esRespuestaGuardable(respuesta) {
+    return respuesta && (respuesta.ok || respuesta.type === "opaque");
+}
+
+function redConLimite(peticion, ms) {
+    return new Promise((resolver, rechazar) => {
+        const temporizador = setTimeout(() => rechazar(new Error("tiempo agotado")), ms);
+
+        fetch(peticion).then(
+            respuesta => {
+                clearTimeout(temporizador);
+                resolver(respuesta);
+            },
+            error => {
+                clearTimeout(temporizador);
+                rechazar(error);
+            }
+        );
+    });
+}
+
+async function redPrimero(event) {
+    const peticion = event.request;
+    const cache = await caches.open(CACHE_ESTATICO);
+
+    try {
+        const respuesta = await redConLimite(peticion, ESPERA_RED_MS);
+
+        if (respuesta.ok) {
+            event.waitUntil(cache.put(peticion, respuesta.clone()));
+        }
+
+        return respuesta;
+    } catch {
+        const guardada = await cache.match(peticion, { ignoreSearch: true });
+
+        if (guardada) {
+            return guardada;
+        }
+
+        if (peticion.mode === "navigate") {
+            const inicio = await cache.match("./index.html");
+
+            if (inicio) {
+                return inicio;
+            }
+        }
+
+        return fetch(peticion);
+    }
+}
+
+async function guardadaYActualiza(event, nombreCache, maximo) {
+    const peticion = event.request;
+    const cache = await caches.open(nombreCache);
+    const guardada = await cache.match(peticion);
+
+    const actualizacion = fetch(peticion)
+        .then(async respuesta => {
+            if (esRespuestaGuardable(respuesta)) {
+                await cache.put(peticion, respuesta.clone());
+                await recortar(nombreCache, maximo);
+            }
+
+            return respuesta;
+        })
+        .catch(() => null);
+
+    if (guardada) {
+        event.waitUntil(actualizacion);
+        return guardada;
+    }
+
+    const respuesta = await actualizacion;
+    return respuesta || Response.error();
+}
+
+async function cachePrimero(event, nombreCache, maximo) {
+    const peticion = event.request;
+    const cache = await caches.open(nombreCache);
+    const guardada = await cache.match(peticion);
+
+    if (guardada) {
+        return guardada;
+    }
+
+    const respuesta = await fetch(peticion);
+
+    if (esRespuestaGuardable(respuesta)) {
+        event.waitUntil(cache.put(peticion, respuesta.clone()).then(() => recortar(nombreCache, maximo)));
+    }
+
+    return respuesta;
+}
+
+self.addEventListener("fetch", event => {
+    const peticion = event.request;
+
+    if (peticion.method !== "GET") {
         return;
     }
 
-    event.respondWith(
-        fetch(event.request)
-            .then(respuesta => {
-                const copia = respuesta.clone();
-                caches.open(CACHE_NAME).then(cache => cache.put(event.request, copia));
-                return respuesta;
-            })
-            .catch(() => caches.match(event.request))
-    );
+    const url = new URL(peticion.url);
+
+    if (url.origin === self.location.origin) {
+        event.respondWith(redPrimero(event));
+        return;
+    }
+
+    if (url.hostname === "pokeapi.co") {
+        event.respondWith(guardadaYActualiza(event, CACHE_API, MAX_API));
+        return;
+    }
+
+    if (url.hostname === "raw.githubusercontent.com") {
+        event.respondWith(cachePrimero(event, CACHE_IMAGENES, MAX_IMAGENES));
+    }
 });

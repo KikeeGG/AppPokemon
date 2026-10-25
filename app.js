@@ -1,5 +1,16 @@
+"use strict";
+
+/* ==========================================================================
+   Ultraball · Pokédex personal
+   Datos en vivo desde PokéAPI + datos.json (nombres en español, tipos, listas)
+   ========================================================================== */
+
 const API = "https://pokeapi.co/api/v2";
+const SPRITES = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon";
 const NIVEL_STATS = 50;
+const ESPECIES_MAXIMO_DEFECTO = 1025;
+const TIEMPO_ESPERA_MS = 12000;
+const SWIPE_ACTIVO = true; // gesto de deslizar para ir al Pokémon anterior/siguiente
 
 const nombresTipos = {
     normal: "Normal",
@@ -43,6 +54,8 @@ const coloresTipos = {
     fairy: "#d685ad"
 };
 
+const ordenTipos = Object.keys(nombresTipos);
+
 const nombresStats = {
     hp: "PS",
     attack: "Ataque",
@@ -52,16 +65,8 @@ const nombresStats = {
     speed: "Velocidad"
 };
 
-const iconosStats = {
-    hp: "♥",
-    attack: "⚔",
-    defense: "◈",
-    "special-attack": "✦",
-    "special-defense": "◇",
-    speed: "➜"
-};
-
-const nombresItems = {
+/* Respaldo por si datos.json no se pudiera cargar (normalmente se usa datos.json) */
+const nombresItemsRespaldo = {
     "fire-stone": "Piedra Fuego",
     "water-stone": "Piedra Agua",
     "thunder-stone": "Piedra Trueno",
@@ -82,35 +87,140 @@ const nombresItems = {
     "deep-sea-tooth": "Diente Mar",
     "deep-sea-scale": "Escama Marina",
     "prism-scale": "Escama Bella",
-    "reaper-cloth": "Tela Terrible",
-    "whipped-dream": "Dulce Aroma",
-    "sachet": "Saquito Aromático",
-    "sweet-apple": "Manzana Dulce",
-    "tart-apple": "Manzana Ácida",
-    "cracked-pot": "Tetera Rota",
-    "chipped-pot": "Tetera Picada",
-    "black-augurite": "Augurita Negra",
-    "peat-block": "Bloque de Turba",
-    "linking-cord": "Cordón Unión"
+    "reaper-cloth": "Tela Terrible"
 };
 
-const sugerenciasIniciales = [];
+/* Etiquetas de formas: "charizard-mega-x" -> "Mega X" */
+const etiquetasFormas = {
+    mega: "Mega",
+    gmax: "Gigamax",
+    x: "X",
+    y: "Y",
+    alola: "Alola",
+    galar: "Galar",
+    hisui: "Hisui",
+    paldea: "Paldea",
+    normal: "Normal",
+    attack: "Ataque",
+    defense: "Defensa",
+    speed: "Velocidad",
+    incarnate: "Avatar",
+    therian: "Tótem",
+    origin: "Origen",
+    altered: "Modificada",
+    sky: "Cielo",
+    land: "Tierra",
+    plant: "Planta",
+    sandy: "Arena",
+    trash: "Basura",
+    male: "Macho",
+    female: "Hembra",
+    f: "Hembra",
+    m: "Macho",
+    single: "Brusco",
+    rapid: "Fluido",
+    strike: "",
+    amped: "Aguda",
+    low: "Grave",
+    key: "",
+    black: "Negra",
+    white: "Blanca",
+    ice: "Hielo",
+    shadow: "Sombría",
+    crowned: "Suprema",
+    hero: "Heroico",
+    zero: "Ingenua",
+    "family-of-three": "Familia de tres",
+    "family-of-four": "Familia de cuatro",
+    "two-segment": "Dos segmentos",
+    "three-segment": "Tres segmentos",
+    school: "Banco",
+    solo: "Individual",
+    baile: "Apasionado",
+    pom: "Animado",
+    pau: "Hula",
+    sensu: "Refinado",
+    midday: "Diurna",
+    midnight: "Nocturna",
+    dusk: "Crepuscular",
+    disguised: "Encubierta",
+    busted: "Descubierta",
+    ordinary: "Normal",
+    resolute: "Brío",
+    aria: "Lírica",
+    pirouette: "Danza",
+    blade: "Filo",
+    shield: "Escudo",
+    average: "Normal",
+    small: "Pequeño",
+    large: "Grande",
+    super: "Enorme",
+    "10": "10%",
+    "50": "50%",
+    complete: "Completa",
+    ash: "Ash",
+    original: "Original",
+    cap: "Gorra",
+    stellar: "Astral",
+    terastal: "Teracristal",
+    teal: "Turquesa",
+    wellspring: "Fuente",
+    hearthflame: "Horno",
+    cornerstone: "Cimiento",
+    bloodmoon: "Luna Sangrienta",
+    bold: "Valiente"
+};
 
-let listaPokemon = [];
-let listaHabilidades = [];
-let cachePokemon = new Map();
-let cacheSpecies = new Map();
-let cacheAbility = new Map();
-let cacheType = new Map();
+const regiones = {
+    kanto: "Kanto",
+    johto: "Johto",
+    hoenn: "Hoenn",
+    sinnoh: "Sinnoh",
+    unova: "Teselia",
+    kalos: "Kalos",
+    alola: "Alola",
+    galar: "Galar",
+    hisui: "Hisui",
+    paldea: "Paldea"
+};
+
+/* ---------- Estado ---------- */
+
+let datos = null;
+let datosListos = Promise.resolve(false);
+const indice = {
+    especies: [],
+    especiePorId: new Map(),
+    especiePorNombre: new Map(),
+    pokemonPorNombre: new Map(),
+    formas: [],
+    habilidades: [],
+    habilidadPorNombre: new Map(),
+    pokemonPorClave: new Map(),
+    habilidadPorClave: new Map(),
+    maximoEspecie: ESPECIES_MAXIMO_DEFECTO
+};
+
+const cachePokemon = new Map();
+const cacheSpecies = new Map();
+const cacheAbility = new Map();
+const cacheType = new Map();
+const cacheChain = new Map();
+const pendientes = new Map();
+
 let solicitudActual = 0;
 let pokemonActual = null;
+let especieActualId = 0;
 let mostrandoShiny = false;
+const historial = [];
+const MAX_HISTORIAL = 50;
 
 const elementos = {};
 
 function iniciarElementos() {
     const ids = [
         "busquedaForm",
+        "atrasBoton",
         "buscador",
         "limpiarBusqueda",
         "sugerencias",
@@ -125,6 +235,7 @@ function iniciarElementos() {
         "nombrePokemon",
         "categoriaPokemon",
         "tiposPokemon",
+        "formas",
         "habilidades",
         "stats",
         "totalStats",
@@ -140,19 +251,48 @@ function iniciarElementos() {
     });
 }
 
+/* ---------- Utilidades de texto ---------- */
+
 function normalizar(texto) {
-    return texto
+    return String(texto ?? "")
         .toLowerCase()
         .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[̀-ͯ]/g, "")
         .trim();
 }
 
+/* Clave de comparación: "Mr. Mime", "mr-mime" y "MrMime" dan la misma */
+function clave(texto) {
+    return normalizar(texto)
+        .replace(/♀/g, "f")
+        .replace(/♂/g, "m")
+        .replace(/[^a-z0-9]/g, "");
+}
+
+/* Texto escrito por la persona -> nombre con formato de la API */
+function nombreApi(texto) {
+    return normalizar(texto)
+        .replace(/♀/g, "-f")
+        .replace(/♂/g, "-m")
+        .replace(/['’.:]/g, "")
+        .replace(/[\s_]+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+}
+
 function capitalizar(texto) {
-    return texto
+    return String(texto ?? "")
         .split("-")
         .map(parte => parte.charAt(0).toUpperCase() + parte.slice(1))
         .join("-");
+}
+
+function prettificar(texto) {
+    return capitalizar(String(texto ?? "")).replaceAll("-", " ");
+}
+
+function formatearNumero(id) {
+    return `#${String(id).padStart(4, "0")}`;
 }
 
 function obtenerNombreLocalizado(nombres, fallback) {
@@ -161,329 +301,749 @@ function obtenerNombreLocalizado(nombres, fallback) {
     return espanol?.name || ingles?.name || fallback;
 }
 
+function extraerId(url) {
+    const partes = String(url).split("/").filter(Boolean);
+    return Number(partes.at(-1));
+}
+
+/* ---------- Almacenamiento seguro (Safari en modo privado lanza errores) ---------- */
+
+function leerAlmacen(llave, porDefecto = null) {
+    try {
+        const valor = localStorage.getItem(llave);
+        return valor === null ? porDefecto : valor;
+    } catch {
+        return porDefecto;
+    }
+}
+
+function escribirAlmacen(llave, valor) {
+    try {
+        localStorage.setItem(llave, valor);
+    } catch {
+        /* sin almacenamiento: la app sigue funcionando */
+    }
+}
+
+function registrarPokemon(nombre) {
+    escribirAlmacen("ultimoPokemon", nombre);
+}
+
+/* ---------- Historial (botón de volver) ---------- */
+
+function actualizarBotonAtras() {
+    elementos.atrasBoton.hidden = historial.length < 2;
+}
+
+/* Tras mostrar algo con éxito: lo añade al historial, o (si veníamos de "volver") retira la pantalla que se deja */
+function gestionarHistorial(tipo, nombre, opciones = {}) {
+    if (opciones.atras) {
+        historial.pop();
+    } else {
+        const ultima = historial.at(-1);
+
+        if (!ultima || ultima.tipo !== tipo || ultima.nombre !== nombre) {
+            historial.push({ tipo, nombre });
+
+            if (historial.length > MAX_HISTORIAL) {
+                historial.shift();
+            }
+        }
+    }
+
+    actualizarBotonAtras();
+}
+
+function volverAtras() {
+    if (historial.length < 2) {
+        return;
+    }
+
+    const anterior = historial.at(-2);
+
+    if (anterior.tipo === "habilidad") {
+        ponerTextoBuscador(nombreHabilidad(anterior.nombre));
+        buscarHabilidad(anterior.nombre, { atras: true });
+    } else {
+        ponerTextoBuscador(nombrePokemon(anterior.nombre));
+        buscarPokemon(anterior.nombre, { atras: true });
+    }
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function cargarUltimoPokemon() {
+    return leerAlmacen("ultimoPokemon", "") || "zekrom";
+}
+
+/* ---------- Red ---------- */
+
 async function obtenerJSON(url, cache) {
     if (cache?.has(url)) {
         return cache.get(url);
     }
 
-    const respuesta = await fetch(url);
-
-    if (!respuesta.ok) {
-        throw new Error(`Error ${respuesta.status}`);
+    if (pendientes.has(url)) {
+        return pendientes.get(url);
     }
 
-    const datos = await respuesta.json();
+    const promesa = (async () => {
+        let ultimoError;
 
-    if (cache) {
-        cache.set(url, datos);
-    }
+        for (let intento = 0; intento < 2; intento++) {
+            const control = new AbortController();
+            const temporizador = setTimeout(() => control.abort(), TIEMPO_ESPERA_MS);
 
-    return datos;
+            try {
+                const respuesta = await fetch(url, { signal: control.signal });
+
+                if (!respuesta.ok) {
+                    const fallo = new Error(`Error ${respuesta.status}`);
+                    fallo.codigo = respuesta.status;
+
+                    if (respuesta.status < 500) {
+                        throw fallo;
+                    }
+
+                    ultimoError = fallo;
+                    continue;
+                }
+
+                const resultado = await respuesta.json();
+                cache?.set(url, resultado);
+                return resultado;
+            } catch (error) {
+                if (error.codigo && error.codigo < 500) {
+                    throw error;
+                }
+
+                ultimoError = error;
+            } finally {
+                clearTimeout(temporizador);
+            }
+        }
+
+        throw ultimoError;
+    })().finally(() => pendientes.delete(url));
+
+    pendientes.set(url, promesa);
+    return promesa;
 }
 
-async function cargarListadoPokemon() {
+/* ---------- datos.json: nombres en español, listas y tabla de tipos ---------- */
+
+function construirIndice(d) {
+    datos = d;
+
+    d.especies.forEach((entrada, id) => {
+        if (!entrada) {
+            return;
+        }
+
+        const especie = {
+            id,
+            name: entrada[0],
+            es: entrada[1],
+            defecto: entrada[2],
+            claveEs: clave(entrada[1]),
+            claveEn: clave(entrada[0])
+        };
+
+        indice.especies.push(especie);
+        indice.especiePorId.set(id, especie);
+        indice.especiePorNombre.set(especie.name, especie);
+
+        for (const k of [especie.claveEs, especie.claveEn]) {
+            if (!indice.pokemonPorClave.has(k)) {
+                indice.pokemonPorClave.set(k, { tipo: "pokemon", nombre: especie.defecto });
+            }
+        }
+    });
+
+    indice.maximoEspecie = d.especies.length - 1;
+
+    d.pokemon.forEach(([name, id, sid]) => {
+        indice.pokemonPorNombre.set(name, { name, id, sid });
+        const especie = indice.especiePorId.get(sid);
+
+        if (!especie || especie.defecto === name) {
+            return;
+        }
+
+        const etiqueta = nombrePokemon(name);
+        const forma = {
+            name,
+            id,
+            sid,
+            etiqueta,
+            clave: clave(etiqueta),
+            claveEn: clave(name)
+        };
+
+        indice.formas.push(forma);
+
+        for (const k of [forma.clave, forma.claveEn]) {
+            if (!indice.pokemonPorClave.has(k)) {
+                indice.pokemonPorClave.set(k, { tipo: "pokemon", nombre: name });
+            }
+        }
+    });
+
+    d.habilidades.forEach(([name, id, es]) => {
+        const habilidad = { name, id, es, claveEs: clave(es), claveEn: clave(name) };
+        indice.habilidades.push(habilidad);
+        indice.habilidadPorNombre.set(name, habilidad);
+
+        for (const k of [habilidad.claveEs, habilidad.claveEn]) {
+            if (!indice.habilidadPorClave.has(k)) {
+                indice.habilidadPorClave.set(k, { tipo: "habilidad", nombre: name });
+            }
+        }
+    });
+}
+
+async function cargarDatos() {
     try {
-        const resumen = await obtenerJSON(`${API}/pokemon?limit=1&offset=0`);
-        const total = resumen.count;
-        const datos = await obtenerJSON(`${API}/pokemon?limit=${total}&offset=0`);
+        const respuesta = await fetch("datos.json");
 
-        listaPokemon = datos.results.map(pokemon => ({
-            name: pokemon.name,
-            id: extraerId(pokemon.url),
-            url: pokemon.url
-        }));
+        if (!respuesta.ok) {
+            throw new Error(`Error ${respuesta.status}`);
+        }
 
+        construirIndice(await respuesta.json());
+        return true;
     } catch (error) {
-        console.error(error);
-        elementos.error.textContent = "No se ha podido cargar la lista de Pokémon. Puedes probar buscando por nombre igualmente.";
+        console.error("No se pudo cargar datos.json (la app funciona, pero sin nombres en español):", error);
+        return false;
     }
 }
 
-async function cargarListadoHabilidades() {
-    try {
-        const resumen = await obtenerJSON(`${API}/ability?limit=1&offset=0`);
-        const datos = await obtenerJSON(`${API}/ability?limit=${resumen.count}&offset=0`);
+/* ---------- Nombres ---------- */
 
-        listaHabilidades = datos.results.map(habilidad => ({
-            name: habilidad.name,
-            id: extraerId(habilidad.url),
-            url: habilidad.url
-        }));
+function etiquetaForma(nombrePokemonApi, nombreEspecie) {
+    const sufijo = nombrePokemonApi.startsWith(`${nombreEspecie}-`)
+        ? nombrePokemonApi.slice(nombreEspecie.length + 1)
+        : nombrePokemonApi;
 
-        if (elementos.buscador.value.trim()) {
-            mostrarSugerencias(elementos.buscador.value);
-        }
-    } catch (error) {
-        console.error("No se pudo cargar el listado de habilidades:", error);
+    if (etiquetasFormas[sufijo] !== undefined) {
+        return etiquetasFormas[sufijo];
     }
+
+    return sufijo
+        .split("-")
+        .map(token => etiquetasFormas[token] ?? capitalizar(token))
+        .filter(Boolean)
+        .join(" ");
 }
 
-function extraerId(url) {
-    const partes = url.split("/").filter(Boolean);
-    return Number(partes.at(-1));
+function nombreEspecie(nombreApiEspecie) {
+    return indice.especiePorNombre.get(nombreApiEspecie)?.es || prettificar(nombreApiEspecie);
 }
 
-function buscarCoincidencias(texto) {
-    const consulta = normalizar(texto);
+function nombrePokemon(nombreApiPokemon) {
+    const pokemon = indice.pokemonPorNombre.get(nombreApiPokemon);
+    const especie = pokemon ? indice.especiePorId.get(pokemon.sid) : null;
 
-    if (!consulta) {
-        return obtenerSugerenciasAleatorias();
+    if (!especie) {
+        return prettificar(nombreApiPokemon);
     }
 
-    const resultados = [];
-    const pokemonEmpiezan = [];
-    const pokemonContienen = [];
-    const habilidadesEmpiezan = [];
-    const habilidadesContienen = [];
-
-    for (const pokemon of listaPokemon) {
-        const nombre = normalizar(pokemon.name);
-
-        if (nombre.startsWith(consulta)) {
-            pokemonEmpiezan.push({ kind: "pokemon", ...pokemon });
-        } else if (nombre.includes(consulta)) {
-            pokemonContienen.push({ kind: "pokemon", ...pokemon });
-        }
+    if (especie.defecto === nombreApiPokemon) {
+        return especie.es;
     }
 
-    for (const habilidad of listaHabilidades) {
-        const nombre = normalizar(habilidad.name);
-
-        if (nombre.startsWith(consulta)) {
-            habilidadesEmpiezan.push({ kind: "habilidad", ...habilidad });
-        } else if (nombre.includes(consulta)) {
-            habilidadesContienen.push({ kind: "habilidad", ...habilidad });
-        }
-    }
-
-    resultados.push(...pokemonEmpiezan, ...habilidadesEmpiezan, ...pokemonContienen, ...habilidadesContienen);
-    return resultados.slice(0, 10);
+    const etiqueta = etiquetaForma(nombreApiPokemon, especie.name);
+    return etiqueta ? `${especie.es} (${etiqueta})` : especie.es;
 }
 
-function obtenerSugerenciasAleatorias() {
-    if (listaPokemon.length === 0) {
-        return [];
-    }
+function nombreHabilidad(nombreApiHabilidad, detalle) {
+    return indice.habilidadPorNombre.get(nombreApiHabilidad)?.es
+        || obtenerNombreLocalizado(detalle?.names, prettificar(nombreApiHabilidad));
+}
 
-    const disponibles = [...listaPokemon];
+function traducirItem(nombre) {
+    return datos?.objetos?.[nombre] || nombresItemsRespaldo[nombre] || prettificar(nombre);
+}
+
+function traducirMovimiento(nombre) {
+    return datos?.movimientos?.[nombre] || prettificar(nombre);
+}
+
+function traducirLugar(nombre) {
+    return datos?.lugares?.[nombre] || prettificar(nombre);
+}
+
+function traducirNaturaleza(nombre) {
+    return datos?.naturalezas?.[nombre] || capitalizar(nombre);
+}
+
+function traducirTipo(nombre) {
+    return nombresTipos[nombre] || capitalizar(nombre);
+}
+
+/* ---------- Búsqueda y sugerencias ---------- */
+
+function crearResultadoPokemon(nombreApiPokemon, prefijo = "Pokémon") {
+    const pokemon = indice.pokemonPorNombre.get(nombreApiPokemon);
+    const numero = pokemon ? ` · ${formatearNumero(pokemon.sid)}` : "";
+
+    return {
+        tipo: "pokemon",
+        nombre: nombreApiPokemon,
+        etiqueta: nombrePokemon(nombreApiPokemon),
+        detalle: `${prefijo}${numero}`
+    };
+}
+
+function resultadoDeEspecie(especie) {
+    return crearResultadoPokemon(especie.defecto);
+}
+
+function obtenerSugerenciasIniciales() {
+    const disponibles = [...indice.especies];
     const sugerencias = [];
 
     while (sugerencias.length < 5 && disponibles.length > 0) {
-        const indice = Math.floor(Math.random() * disponibles.length);
-        const pokemon = disponibles.splice(indice, 1)[0];
-
-        sugerencias.push({
-            kind: "pokemon",
-            ...pokemon
-        });
+        const posicion = Math.floor(Math.random() * disponibles.length);
+        sugerencias.push(resultadoDeEspecie(disponibles.splice(posicion, 1)[0]));
     }
 
     return sugerencias;
 }
 
-function actualizarSugerenciasAleatorias() {
-    const sugerencias = obtenerSugerenciasAleatorias();
+function buscarCoincidencias(texto) {
+    const consulta = clave(texto);
+
+    if (!consulta) {
+        return obtenerSugerenciasIniciales();
+    }
+
+    if (/^#?\d+$/.test(texto.trim())) {
+        const cadena = String(Number(texto.trim().replace("#", "")));
+        const exacta = indice.especiePorId.get(Number(cadena));
+        const resultado = [];
+
+        if (exacta) {
+            resultado.push(resultadoDeEspecie(exacta));
+        }
+
+        for (const especie of indice.especies) {
+            if (resultado.length >= 8) {
+                break;
+            }
+
+            if (especie !== exacta && String(especie.id).startsWith(cadena)) {
+                resultado.push(resultadoDeEspecie(especie));
+            }
+        }
+
+        return resultado;
+    }
+
+    const pokemonEmpiezan = [];
+    const habilidadesEmpiezan = [];
+    const pokemonContienen = [];
+    const habilidadesContienen = [];
+    const formasContienen = [];
+
+    for (const especie of indice.especies) {
+        if (especie.claveEs.startsWith(consulta) || especie.claveEn.startsWith(consulta)) {
+            pokemonEmpiezan.push(resultadoDeEspecie(especie));
+        } else if (especie.claveEs.includes(consulta) || especie.claveEn.includes(consulta)) {
+            pokemonContienen.push(resultadoDeEspecie(especie));
+        }
+    }
+
+    for (const habilidad of indice.habilidades) {
+        const resultado = {
+            tipo: "habilidad",
+            nombre: habilidad.name,
+            etiqueta: habilidad.es,
+            detalle: "Habilidad"
+        };
+
+        if (habilidad.claveEs.startsWith(consulta) || habilidad.claveEn.startsWith(consulta)) {
+            habilidadesEmpiezan.push(resultado);
+        } else if (habilidad.claveEs.includes(consulta) || habilidad.claveEn.includes(consulta)) {
+            habilidadesContienen.push(resultado);
+        }
+    }
+
+    for (const forma of indice.formas) {
+        if (forma.clave.includes(consulta) || forma.claveEn.includes(consulta)) {
+            formasContienen.push(crearResultadoPokemon(forma.name, "Forma"));
+        }
+    }
+
+    return [
+        ...pokemonEmpiezan,
+        ...habilidadesEmpiezan,
+        ...pokemonContienen,
+        ...habilidadesContienen,
+        ...formasContienen
+    ].slice(0, 8);
+}
+
+function resolverEntrada(texto) {
+    const entrada = texto.trim();
+    const k = clave(entrada);
+
+    if (!k) {
+        return null;
+    }
+
+    if (/^#?\d+$/.test(entrada)) {
+        const especie = indice.especiePorId.get(Number(entrada.replace("#", "")));
+        return especie ? { tipo: "pokemon", nombre: especie.defecto } : null;
+    }
+
+    return indice.pokemonPorClave.get(k) || indice.habilidadPorClave.get(k) || null;
+}
+
+function actualizarSugerenciasIniciales() {
+    const sugerencias = obtenerSugerenciasIniciales();
     renderizarSugerencias(sugerencias, sugerencias.length > 0);
 }
 
 function mostrarSugerencias(texto) {
-    const coincidencias = buscarCoincidencias(texto);
-    renderizarSugerencias(coincidencias, true);
+    renderizarSugerencias(buscarCoincidencias(texto), true);
+}
+
+function ocultarSugerencias() {
+    elementos.sugerencias.classList.remove("visible");
 }
 
 function renderizarSugerencias(coincidencias, mostrar) {
     elementos.sugerencias.innerHTML = "";
 
     if (!mostrar || coincidencias.length === 0) {
-        elementos.sugerencias.classList.remove("visible");
+        ocultarSugerencias();
         return;
     }
 
     coincidencias.forEach(resultado => {
         const boton = document.createElement("button");
         boton.type = "button";
-        boton.className = `sugerencia ${resultado.kind === "habilidad" ? "sugerencia-habilidad" : ""}`;
-        boton.dataset.nombre = resultado.name;
+        boton.className = `sugerencia ${resultado.tipo === "habilidad" ? "sugerencia-habilidad" : ""}`;
+        boton.dataset.nombre = resultado.nombre;
 
         const icono = document.createElement("span");
         icono.className = "sugerencia-icono";
-        icono.textContent = resultado.kind === "habilidad" ? "✦" : "◈";
+        icono.textContent = resultado.tipo === "habilidad" ? "✦" : "◈";
 
         const contenido = document.createElement("span");
         contenido.className = "sugerencia-contenido";
 
         const nombre = document.createElement("span");
         nombre.className = "sugerencia-nombre";
-        nombre.textContent = capitalizar(resultado.name);
+        nombre.textContent = resultado.etiqueta;
 
-        const tipo = document.createElement("small");
-        tipo.className = "sugerencia-tipo";
-        tipo.textContent = resultado.kind === "habilidad" ? "Habilidad" : `Pokémon ${resultado.id ? `· #${String(resultado.id).padStart(4, "0")}` : ""}`;
+        const detalle = document.createElement("small");
+        detalle.className = "sugerencia-tipo";
+        detalle.textContent = resultado.detalle;
 
-        contenido.append(nombre, tipo);
+        contenido.append(nombre, detalle);
 
         const flecha = document.createElement("span");
         flecha.className = "sugerencia-flecha";
         flecha.textContent = "→";
 
         boton.append(icono, contenido, flecha);
-
-        boton.addEventListener("click", () => {
-            elementos.buscador.value = resultado.name;
-            elementos.limpiarBusqueda.classList.add("visible");
-            elementos.sugerencias.classList.remove("visible");
-
-            if (resultado.kind === "habilidad") {
-                buscarHabilidad(resultado.name);
-            } else {
-                buscarPokemon(resultado.name);
-            }
-        });
-
+        boton.addEventListener("click", () => abrirResultado(resultado));
         elementos.sugerencias.appendChild(boton);
     });
 
     elementos.sugerencias.classList.add("visible");
 }
 
-async function buscarPokemon(entrada, opciones = {}) {
-    const nombre = normalizar(entrada);
-    const cargaInicial = opciones.inicial === true;
+function ponerTextoBuscador(texto) {
+    elementos.buscador.value = texto;
+    elementos.limpiarBusqueda.classList.toggle("visible", texto.length > 0);
+}
 
-    if (!nombre) {
+function abrirResultado(resultado) {
+    ocultarSugerencias();
+    ponerTextoBuscador(resultado.etiqueta ?? resultado.nombre);
+
+    if (resultado.tipo === "habilidad") {
+        return buscarHabilidad(resultado.nombre);
+    }
+
+    return buscarPokemon(resultado.nombre);
+}
+
+function irAPokemon(nombreApiPokemon) {
+    ponerTextoBuscador(nombrePokemon(nombreApiPokemon));
+    buscarPokemon(nombreApiPokemon);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function irAHabilidad(nombreApiHabilidad) {
+    ponerTextoBuscador(nombreHabilidad(nombreApiHabilidad));
+    buscarHabilidad(nombreApiHabilidad);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+async function buscarEntrada(texto) {
+    const entrada = texto.trim();
+
+    if (!entrada) {
         return;
     }
 
-    elementos.sugerencias.classList.remove("visible");
+    await datosListos;
+
+    const resuelta = resolverEntrada(entrada) || buscarCoincidencias(entrada)[0];
+
+    if (resuelta && clave(entrada)) {
+        await abrirResultado(resuelta);
+        return;
+    }
+
+    /* Sin datos.json o sin coincidencias: probar tal cual contra la API */
+    const nombre = nombreApi(entrada);
+    const resultadoPokemon = await buscarPokemon(nombre, { silencioso404: true });
+
+    if (resultadoPokemon === "404") {
+        const resultadoHabilidad = await buscarHabilidad(nombre, { silencioso404: true });
+
+        if (resultadoHabilidad === "404") {
+            mostrarNoEncontrado(entrada);
+        }
+    }
+}
+
+function mostrarNoEncontrado(entrada) {
+    elementos.error.textContent =
+        `No he encontrado “${entrada.trim()}”. Prueba con el nombre en español o en inglés, o con el número de la Pokédex.`;
+}
+
+function mostrarErrorDeRed() {
+    elementos.error.textContent = navigator.onLine === false
+        ? "Sin conexión. Solo funcionan los Pokémon que ya has consultado antes."
+        : "No se ha podido conectar con PokéAPI. Comprueba tu conexión y vuelve a intentarlo.";
+}
+
+/* ---------- Carga de un Pokémon ---------- */
+
+async function cargarPokemonApi(nombre) {
+    try {
+        return await obtenerJSON(`${API}/pokemon/${encodeURIComponent(nombre)}`, cachePokemon);
+    } catch (error) {
+        if (error.codigo !== 404) {
+            throw error;
+        }
+
+        /* El nombre puede ser el de una especie con varias formas (p. ej. "deoxys") */
+        const especie = await obtenerJSON(`${API}/pokemon-species/${encodeURIComponent(nombre)}`, cacheSpecies);
+        const defecto = especie.varieties?.find(variedad => variedad.is_default)?.pokemon?.name;
+
+        if (!defecto) {
+            throw error;
+        }
+
+        return obtenerJSON(`${API}/pokemon/${encodeURIComponent(defecto)}`, cachePokemon);
+    }
+}
+
+function normalizarRelacionesApi(tipoJson) {
+    const relaciones = tipoJson.damage_relations;
+    const nombres = lista => lista.map(ref => ref.name);
+
+    return {
+        dobleDe: nombres(relaciones.double_damage_from),
+        mitadDe: nombres(relaciones.half_damage_from),
+        nadaDe: nombres(relaciones.no_damage_from),
+        dobleA: nombres(relaciones.double_damage_to)
+    };
+}
+
+async function cargarRelacionesTipos(tiposPokemon) {
+    const resultados = await Promise.allSettled(tiposPokemon.map(async item => {
+        const incluidas = datos?.tipos?.[item.type.name];
+
+        if (incluidas) {
+            return incluidas;
+        }
+
+        return normalizarRelacionesApi(await obtenerJSON(item.type.url, cacheType));
+    }));
+
+    /* Si falta algún tipo, mejor no mostrar nada que mostrar datos erróneos */
+    if (resultados.length === 0 || resultados.some(resultado => resultado.status !== "fulfilled")) {
+        return null;
+    }
+
+    return resultados.map(resultado => resultado.value);
+}
+
+async function buscarPokemon(entrada, opciones = {}) {
+    const nombre = nombreApi(entrada);
+    const cargaInicial = opciones.inicial === true;
+
+    if (!nombre) {
+        return "error";
+    }
+
+    ocultarSugerencias();
     elementos.error.textContent = "";
     const idSolicitud = ++solicitudActual;
 
-    mostrarEstado(cargaInicial ? "Preparando la Pokédex..." : `Buscando ${capitalizar(nombre)}...`);
+    mostrarEstado(cargaInicial ? "Preparando la Pokédex..." : `Buscando ${nombrePokemon(nombre)}...`);
 
     try {
-        const pokemon = await obtenerJSON(
-            `${API}/pokemon/${encodeURIComponent(nombre)}`,
-            cachePokemon
-        );
-
-        const species = await obtenerJSON(
-            pokemon.species.url,
-            cacheSpecies
-        );
+        const [pokemon] = await Promise.all([cargarPokemonApi(nombre), datosListos]);
 
         if (idSolicitud !== solicitudActual) {
-            return;
+            return "obsoleta";
         }
 
-        const resultados = await Promise.allSettled([
-            obtenerJSON(species.evolution_chain.url),
-            Promise.all(pokemon.abilities.map(item => obtenerJSON(item.ability.url, cacheAbility))),
-            Promise.all(pokemon.types.map(item => obtenerJSON(item.type.url, cacheType)))
+        const [species, relaciones] = await Promise.all([
+            obtenerJSON(pokemon.species.url, cacheSpecies).catch(error => {
+                console.warn("No se pudo cargar la especie:", error);
+                return null;
+            }),
+            cargarRelacionesTipos(pokemon.types)
         ]);
 
         if (idSolicitud !== solicitudActual) {
-            return;
+            return "obsoleta";
         }
 
-        const cadenaEvolucion = resultados[0].status === "fulfilled"
-            ? resultados[0].value
-            : null;
-        const habilidades = resultados[1].status === "fulfilled"
-            ? resultados[1].value
-            : [];
-        const tipos = resultados[2].status === "fulfilled"
-            ? resultados[2].value
-            : [];
-
-        mostrarPokemon(pokemon, species, habilidades, tipos);
-
-        if (cadenaEvolucion) {
-            try {
-                await mostrarEvoluciones(cadenaEvolucion, pokemon.species.name);
-            } catch (error) {
-                console.error("Error cargando evolución:", error);
-                elementos.evoluciones.innerHTML = '<p class="evolucion-vacia">No se ha podido cargar la línea evolutiva.</p>';
-            }
-        } else {
-            elementos.evoluciones.innerHTML = '<p class="evolucion-vacia">No se ha podido cargar la línea evolutiva.</p>';
-        }
-
-        if (idSolicitud !== solicitudActual) {
-            return;
-        }
-
-        if (tipos.length > 0) {
-            renderizarDebilidadesYFortalezas(tipos);
-        } else {
-            elementos.debilidades.innerHTML = '<span class="grupo-vacio">No disponible</span>';
-            elementos.resistencias.innerHTML = '<span class="grupo-vacio">No disponible</span>';
-            elementos.inmunidades.innerHTML = '<span class="grupo-vacio">No disponible</span>';
-            elementos.ofensivas.innerHTML = '<span class="grupo-vacio">No disponible</span>';
-        }
-
+        mostrarPokemon(pokemon, species);
+        renderizarEfectividad(relaciones);
         ocultarEstado();
-        guardarUltimoPokemon(nombre);
-        return true;
+        registrarPokemon(pokemon.name);
+        gestionarHistorial("pokemon", pokemon.name, opciones);
+
+        /* La línea evolutiva se carga aparte: no retrasa el resto de la ficha */
+        cargarEvoluciones(species, idSolicitud);
+        return "ok";
     } catch (error) {
         console.error("Error cargando Pokémon:", error);
 
         if (idSolicitud !== solicitudActual) {
-            return;
+            return "obsoleta";
         }
 
         ocultarEstado();
 
-        if (cargaInicial) {
-            elementos.ficha.classList.remove("visible");
-            elementos.error.textContent = "No se ha podido conectar con PokéAPI. Comprueba tu conexión y vuelve a intentarlo.";
-        } else {
-            elementos.error.textContent = "No he encontrado ese Pokémon. Prueba con su nombre en inglés, por ejemplo: pikachu, bulbasaur o charizard.";
+        if (error.codigo === 404) {
+            if (!opciones.silencioso404) {
+                mostrarNoEncontrado(entrada);
+            }
+
+            return "404";
         }
 
-        return false;
+        if (cargaInicial) {
+            elementos.ficha.classList.remove("visible");
+        }
+
+        mostrarErrorDeRed();
+        return "error";
     }
 }
 
-async function buscarHabilidad(entrada) {
-    const nombre = normalizar(entrada);
+async function cargarEvoluciones(species, idSolicitud) {
+    elementos.evoluciones.innerHTML = '<p class="evolucion-vacia">Cargando línea evolutiva...</p>';
 
-    if (!nombre) {
+    if (!species?.evolution_chain?.url) {
+        elementos.evoluciones.innerHTML = species
+            ? '<p class="evolucion-vacia">Este Pokémon no tiene evoluciones ni preevoluciones registradas.</p>'
+            : '<p class="evolucion-vacia">No se ha podido cargar la línea evolutiva.</p>';
         return;
     }
 
-    elementos.sugerencias.classList.remove("visible");
+    try {
+        const cadena = await obtenerJSON(species.evolution_chain.url, cacheChain);
+
+        if (idSolicitud !== solicitudActual) {
+            return;
+        }
+
+        mostrarEvoluciones(cadena, species.name);
+    } catch (error) {
+        console.error("Error cargando evolución:", error);
+
+        if (idSolicitud === solicitudActual) {
+            elementos.evoluciones.innerHTML = '<p class="evolucion-vacia">No se ha podido cargar la línea evolutiva.</p>';
+        }
+    }
+}
+
+/* ---------- Habilidades (ficha de una habilidad) ---------- */
+
+async function buscarHabilidad(entrada, opciones = {}) {
+    const nombre = nombreApi(entrada);
+
+    if (!nombre) {
+        return "error";
+    }
+
+    ocultarSugerencias();
     elementos.error.textContent = "";
-    elementos.ficha.classList.remove("visible");
-    elementos.habilidadDetalle.classList.remove("visible");
     const idSolicitud = ++solicitudActual;
 
-    mostrarEstado(`Buscando habilidad ${capitalizar(nombre)}...`);
+    mostrarEstado(`Buscando habilidad ${nombreHabilidad(nombre)}...`);
 
     try {
         const habilidad = await obtenerJSON(`${API}/ability/${encodeURIComponent(nombre)}`, cacheAbility);
 
         if (idSolicitud !== solicitudActual) {
-            return;
+            return "obsoleta";
         }
 
+        elementos.ficha.classList.remove("visible");
         renderizarDetalleHabilidad(habilidad);
         ocultarEstado();
+        gestionarHistorial("habilidad", habilidad.name, opciones);
+        return "ok";
     } catch (error) {
         console.error("Error cargando habilidad:", error);
+
         if (idSolicitud !== solicitudActual) {
-            return;
+            return "obsoleta";
         }
 
         ocultarEstado();
-        elementos.error.textContent = `No he encontrado la habilidad “${capitalizar(nombre)}”. Prueba con su nombre en inglés, por ejemplo: intimidate, levitate o static.`;
+
+        if (error.codigo === 404) {
+            if (!opciones.silencioso404) {
+                mostrarNoEncontrado(entrada);
+            }
+
+            return "404";
+        }
+
+        mostrarErrorDeRed();
+        return "error";
     }
 }
 
+function textoHabilidadEnEspanol(habilidad) {
+    const entradas = (habilidad.flavor_text_entries || []).filter(item => item.language?.name === "es");
+    const ultima = entradas.at(-1);
+
+    return ultima ? ultima.flavor_text.replace(/[\n\f­]+/g, " ").replace(/\s+/g, " ").trim() : "";
+}
+
+function obtenerTextoLocalizado(lista, campo) {
+    if (!Array.isArray(lista)) {
+        return "";
+    }
+
+    const espanol = lista.find(item => item.language?.name === "es");
+    const ingles = lista.find(item => item.language?.name === "en");
+    return espanol?.[campo] || ingles?.[campo] || "";
+}
+
 function renderizarDetalleHabilidad(habilidad) {
-    const nombre = obtenerNombreLocalizado(habilidad.names, capitalizar(habilidad.name));
-    const efecto = obtenerTextoLocalizado(habilidad.effect_entries, "effect") || "No hay una descripción disponible para esta habilidad.";
-    const resumen = obtenerTextoLocalizado(habilidad.effect_entries, "short_effect") || "";
-    const pokemon = [...habilidad.pokemon].sort((a, b) => a.pokemon.name.localeCompare(b.pokemon.name));
+    const nombre = nombreHabilidad(habilidad.name, habilidad);
+    const textoEs = textoHabilidadEnEspanol(habilidad);
+    const efectoEn = obtenerTextoLocalizado(habilidad.effect_entries, "effect");
+    const principal = textoEs || efectoEn || "No hay una descripción disponible para esta habilidad.";
+    const pokemon = [...habilidad.pokemon].sort((a, b) => extraerId(a.pokemon.url) - extraerId(b.pokemon.url));
 
     elementos.habilidadDetalle.innerHTML = "";
     elementos.habilidadDetalle.classList.add("visible");
@@ -498,11 +1058,11 @@ function renderizarDetalleHabilidad(habilidad) {
     const titulo = document.createElement("h2");
     titulo.textContent = nombre;
 
-    const nombreApi = document.createElement("p");
-    nombreApi.className = "detalle-subtitulo";
-    nombreApi.textContent = capitalizar(habilidad.name);
+    const nombreEnApi = document.createElement("p");
+    nombreEnApi.className = "detalle-subtitulo";
+    nombreEnApi.textContent = capitalizar(habilidad.name);
 
-    cabecera.append(etiqueta, titulo, nombreApi);
+    cabecera.append(etiqueta, titulo, nombreEnApi);
 
     const descripcion = document.createElement("div");
     descripcion.className = "habilidad-descripcion";
@@ -511,14 +1071,14 @@ function renderizarDetalleHabilidad(habilidad) {
     descripcionTitulo.textContent = "¿QUÉ HACE?";
 
     const descripcionTexto = document.createElement("p");
-    descripcionTexto.textContent = efecto;
+    descripcionTexto.textContent = principal;
 
     descripcion.append(descripcionTitulo, descripcionTexto);
 
-    if (resumen && resumen !== efecto) {
-        const resumenTexto = document.createElement("small");
-        resumenTexto.textContent = resumen;
-        descripcion.appendChild(resumenTexto);
+    if (textoEs && efectoEn) {
+        const detalleTecnico = document.createElement("small");
+        detalleTecnico.textContent = `En detalle (inglés): ${efectoEn}`;
+        descripcion.appendChild(detalleTecnico);
     }
 
     const poseedores = document.createElement("div");
@@ -528,7 +1088,11 @@ function renderizarDetalleHabilidad(habilidad) {
     poseedoresCabecera.className = "poseedores-cabecera";
 
     const poseedoresTitulo = document.createElement("div");
-    poseedoresTitulo.innerHTML = `<span>POKÉMON QUE LA POSEEN</span><small>${pokemon.length} Pokémon registrados</small>`;
+    const poseedoresEtiqueta = document.createElement("span");
+    poseedoresEtiqueta.textContent = "POKÉMON QUE LA POSEEN";
+    const poseedoresTotal = document.createElement("small");
+    poseedoresTotal.textContent = `${pokemon.length} Pokémon registrados`;
+    poseedoresTitulo.append(poseedoresEtiqueta, poseedoresTotal);
     poseedoresCabecera.appendChild(poseedoresTitulo);
 
     const grid = document.createElement("div");
@@ -539,25 +1103,20 @@ function renderizarDetalleHabilidad(habilidad) {
         tarjeta.type = "button";
         tarjeta.className = "poseedor-pokemon";
 
-        const id = extraerId(item.pokemon.url);
+        const nombreMostrado = nombrePokemon(item.pokemon.name);
         const sprite = document.createElement("img");
         sprite.loading = "lazy";
-        sprite.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/${id}.png`;
-        sprite.alt = `Sprite de ${capitalizar(item.pokemon.name)}`;
+        asignarSpriteConRespaldo(sprite, extraerId(item.pokemon.url), true);
+        sprite.alt = `Sprite de ${nombreMostrado}`;
 
         const texto = document.createElement("span");
-        texto.textContent = capitalizar(item.pokemon.name);
+        texto.textContent = nombreMostrado;
 
         const tipo = document.createElement("small");
         tipo.textContent = item.is_hidden ? "Oculta" : "Disponible";
 
         tarjeta.append(sprite, texto, tipo);
-        tarjeta.addEventListener("click", () => {
-            elementos.buscador.value = item.pokemon.name;
-            elementos.limpiarBusqueda.classList.add("visible");
-            buscarPokemon(item.pokemon.name);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        });
+        tarjeta.addEventListener("click", () => irAPokemon(item.pokemon.name));
 
         grid.appendChild(tarjeta);
     });
@@ -565,55 +1124,124 @@ function renderizarDetalleHabilidad(habilidad) {
     poseedores.append(poseedoresCabecera, grid);
     elementos.habilidadDetalle.append(cabecera, descripcion, poseedores);
 
-    document.title = `${nombre} · Habilidad · Pokédex`;
+    document.title = `${nombre} · Habilidad · Ultraball`;
 }
 
-function obtenerTextoLocalizado(lista, campo) {
-    if (!Array.isArray(lista)) {
-        return "";
+/* ---------- Sprites ---------- */
+
+function urlsSprite(id, preferirPixel) {
+    const urls = [];
+
+    if (preferirPixel && id <= 649) {
+        urls.push(`${SPRITES}/versions/generation-v/black-white/${id}.png`);
     }
 
-    const espanol = lista.find(item => item.language?.name === "es");
-    const ingles = lista.find(item => item.language?.name === "en");
-    return espanol?.[campo] || ingles?.[campo] || "";
+    urls.push(
+        `${SPRITES}/other/home/${id}.png`,
+        `${SPRITES}/other/official-artwork/${id}.png`,
+        `${SPRITES}/${id}.png`
+    );
+
+    return urls;
 }
 
-function mostrarPokemon(pokemon, species, habilidades, tipos) {
+/* Si un sprite no existe (p. ej. no hay de Gen. V para Pokémon nuevos), prueba el siguiente */
+function asignarSpriteConRespaldo(img, id, preferirPixel) {
+    const urls = urlsSprite(id, preferirPixel);
+    let posicion = 0;
+
+    img.onerror = () => {
+        posicion += 1;
+
+        if (posicion < urls.length) {
+            img.src = urls[posicion];
+        } else {
+            img.onerror = null;
+        }
+    };
+
+    img.src = urls[0];
+}
+
+function obtenerSpritePrincipal(pokemon) {
+    return pokemon.sprites.versions?.["generation-v"]?.["black-white"]?.animated?.front_default ||
+        pokemon.sprites.versions?.["generation-v"]?.["black-white"]?.front_default ||
+        pokemon.sprites.other?.home?.front_default ||
+        pokemon.sprites.other?.["official-artwork"]?.front_default ||
+        pokemon.sprites.front_default;
+}
+
+function obtenerSpriteShiny(pokemon) {
+    return pokemon.sprites.versions?.["generation-v"]?.["black-white"]?.animated?.front_shiny ||
+        pokemon.sprites.versions?.["generation-v"]?.["black-white"]?.front_shiny ||
+        pokemon.sprites.other?.home?.front_shiny ||
+        pokemon.sprites.other?.["official-artwork"]?.front_shiny ||
+        pokemon.sprites.front_shiny;
+}
+
+/* ---------- Ficha del Pokémon ---------- */
+
+function nombreVisiblePokemon(pokemon, species) {
+    const nombreEspecieApi = species?.name ?? pokemon.species.name;
+    const id = extraerId(pokemon.species.url);
+    const base = indice.especiePorId.get(id)?.es
+        ?? obtenerNombreLocalizado(species?.names, prettificar(nombreEspecieApi));
+    const defecto = species?.varieties?.find(variedad => variedad.is_default)?.pokemon?.name
+        ?? indice.especiePorId.get(id)?.defecto
+        ?? pokemon.name;
+
+    if (pokemon.name === defecto) {
+        return base;
+    }
+
+    const etiqueta = etiquetaForma(pokemon.name, nombreEspecieApi);
+    return etiqueta ? `${base} (${etiqueta})` : base;
+}
+
+function mostrarPokemon(pokemon, species) {
     pokemonActual = pokemon;
+    especieActualId = extraerId(pokemon.species.url);
     mostrandoShiny = false;
+
+    const spriteShiny = obtenerSpriteShiny(pokemon);
     elementos.shinyBoton.classList.remove("activo");
     elementos.shinyBoton.setAttribute("aria-pressed", "false");
     elementos.shinyBoton.setAttribute("aria-label", "Mostrar versión shiny");
+    elementos.shinyBoton.style.display = spriteShiny ? "" : "none";
 
     elementos.habilidadDetalle.classList.remove("visible");
     elementos.ficha.classList.add("visible");
 
-    const nombre = obtenerNombreLocalizado(species.names, capitalizar(pokemon.name));
-    const genero = species.genera ? obtenerNombreLocalizado(species.genera, "Pokémon") : "Pokémon";
+    const nombre = nombreVisiblePokemon(pokemon, species);
+    const genero = species?.genera ? obtenerNombreLocalizado(species.genera, "Pokémon") : "Pokémon";
     const imagen = obtenerSpritePrincipal(pokemon);
-    const imagenFondo =
-        pokemon.sprites.other?.["official-artwork"]?.front_default ||
-        imagen;
+    const imagenFondo = pokemon.sprites.other?.["official-artwork"]?.front_default || imagen;
 
     const tipoPrincipal = pokemon.types[0]?.type?.name || "normal";
     const fondoTipo = `./assets/backgrounds/${tipoPrincipal}.gif`;
 
-    elementos.ficha.classList.add("visible");
     elementos.nombrePokemon.textContent = nombre;
-    elementos.numeroPokedex.textContent = `#${String(pokemon.id).padStart(4, "0")}`;
+    elementos.numeroPokedex.textContent = formatearNumero(especieActualId);
     elementos.categoriaPokemon.textContent = genero;
-    elementos.pokemonSprite.src = imagen || "";
-    elementos.pokemonSprite.alt = `Sprite de ${nombre}`;
 
+    if (imagen) {
+        elementos.pokemonSprite.onerror = null;
+        elementos.pokemonSprite.src = imagen;
+    } else {
+        asignarSpriteConRespaldo(elementos.pokemonSprite, especieActualId, true);
+    }
+
+    elementos.pokemonSprite.alt = `Sprite de ${nombre}`;
     elementos.fondoPokemon.style.backgroundImage = `url("${fondoTipo}"), url("${imagenFondo || ""}")`;
 
     document.documentElement.style.setProperty("--accent", coloresTipos[tipoPrincipal] || "#ffffff");
 
-    document.title = `${nombre} · Pokédex`;
+    document.title = `${nombre} · Ultraball`;
     document.querySelector('meta[name="theme-color"]').setAttribute("content", coloresTipos[tipoPrincipal] || "#233044");
 
     renderizarTiposPokemon(pokemon.types);
-    renderizarHabilidades(pokemon, habilidades);
+    renderizarFormas(pokemon, species);
+    renderizarHabilidades(pokemon);
     renderizarStats(pokemon.stats);
 }
 
@@ -621,9 +1249,7 @@ function renderizarTiposPokemon(tiposPokemon) {
     elementos.tiposPokemon.innerHTML = "";
 
     tiposPokemon.forEach(item => {
-        const nombreTipo = item.type.name;
-        const chip = crearChipTipo(nombreTipo);
-        elementos.tiposPokemon.appendChild(chip);
+        elementos.tiposPokemon.appendChild(crearChipTipo(item.type.name));
     });
 }
 
@@ -633,7 +1259,7 @@ function crearChipTipo(nombreTipo, multiplicador = null) {
     chip.dataset.tipo = nombreTipo;
 
     const texto = document.createElement("span");
-    texto.textContent = nombresTipos[nombreTipo] || capitalizar(nombreTipo);
+    texto.textContent = traducirTipo(nombreTipo);
     chip.appendChild(texto);
 
     if (multiplicador !== null) {
@@ -646,7 +1272,46 @@ function crearChipTipo(nombreTipo, multiplicador = null) {
     return chip;
 }
 
-function renderizarHabilidades(pokemon, habilidades) {
+function renderizarFormas(pokemon, species) {
+    elementos.formas.innerHTML = "";
+
+    const variedades = species?.varieties ?? [];
+
+    if (variedades.length < 2) {
+        elementos.formas.classList.remove("visible");
+        return;
+    }
+
+    const nombreEspecieApi = species.name;
+
+    variedades.forEach(variedad => {
+        const nombreForma = variedad.pokemon.name;
+        const boton = document.createElement("button");
+        boton.type = "button";
+        boton.className = "forma-chip";
+
+        if (nombreForma === pokemon.name) {
+            boton.classList.add("activa");
+            boton.setAttribute("aria-current", "true");
+        }
+
+        boton.textContent = nombreForma === nombreEspecieApi
+            ? "Normal"
+            : etiquetaForma(nombreForma, nombreEspecieApi) || "Normal";
+
+        boton.addEventListener("click", () => {
+            if (nombreForma !== pokemon.name) {
+                irAPokemon(nombreForma);
+            }
+        });
+
+        elementos.formas.appendChild(boton);
+    });
+
+    elementos.formas.classList.add("visible");
+}
+
+function renderizarHabilidades(pokemon) {
     elementos.habilidades.innerHTML = "";
 
     const ordenadas = [...pokemon.abilities].sort((a, b) => {
@@ -657,7 +1322,6 @@ function renderizarHabilidades(pokemon, habilidades) {
     });
 
     ordenadas.forEach(referencia => {
-        const detalle = habilidades.find(item => item.name === referencia.ability.name);
         const tarjeta = document.createElement("article");
         tarjeta.className = `habilidad ${referencia.is_hidden ? "oculta" : ""}`;
 
@@ -670,18 +1334,10 @@ function renderizarHabilidades(pokemon, habilidades) {
                 : "Habilidad secundaria";
 
         const nombre = document.createElement("strong");
-        nombre.textContent = obtenerNombreLocalizado(
-            detalle?.names,
-            capitalizar(referencia.ability.name)
-        );
+        nombre.textContent = nombreHabilidad(referencia.ability.name);
 
         tarjeta.append(etiqueta, nombre);
-        tarjeta.addEventListener("click", () => {
-            elementos.buscador.value = referencia.ability.name;
-            elementos.limpiarBusqueda.classList.add("visible");
-            buscarHabilidad(referencia.ability.name);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        });
+        tarjeta.addEventListener("click", () => irAHabilidad(referencia.ability.name));
         elementos.habilidades.appendChild(tarjeta);
     });
 
@@ -724,7 +1380,7 @@ function renderizarStats(statsPokemon) {
 
         const rango = document.createElement("span");
         rango.className = "stat-rango";
-        rango.textContent = `${valores.min}–${valores.max}`;
+        rango.textContent = valores.min === valores.max ? `${valores.min}` : `${valores.min}–${valores.max}`;
 
         const base = document.createElement("strong");
         base.className = "stat-base";
@@ -748,22 +1404,7 @@ function renderizarStats(statsPokemon) {
     elementos.totalStats.textContent = `${total} Puntos`;
 }
 
-function clasificarStat(base, media, umbral, rango) {
-    if (rango < 25) {
-        return "stat-mediocre";
-    }
-
-    if (base >= media + umbral) {
-        return "stat-fuerte";
-    }
-
-    if (base <= media - umbral) {
-        return "stat-mala";
-    }
-
-    return "stat-mediocre";
-}
-
+/* Rango de la estadística a nivel 50: IV 0–31, EV 0–252 y naturaleza ×0.9 / ×1.1 */
 function calcularNivel50(base, nombreStat) {
     const ivMinimo = 0;
     const ivMaximo = 31;
@@ -772,6 +1413,11 @@ function calcularNivel50(base, nombreStat) {
     const nivel = NIVEL_STATS;
 
     if (nombreStat === "hp") {
+        /* Shedinja (PS base 1) siempre tiene 1 PS */
+        if (base === 1) {
+            return { min: 1, max: 1 };
+        }
+
         const min = Math.floor(((2 * base + ivMinimo + Math.floor(evMinimo / 4)) * nivel) / 100) + nivel + 10;
         const max = Math.floor(((2 * base + ivMaximo + Math.floor(evMaximo / 4)) * nivel) / 100) + nivel + 10;
         return { min, max };
@@ -780,35 +1426,19 @@ function calcularNivel50(base, nombreStat) {
     const baseMin = Math.floor(((2 * base + ivMinimo + Math.floor(evMinimo / 4)) * nivel) / 100) + 5;
     const baseMax = Math.floor(((2 * base + ivMaximo + Math.floor(evMaximo / 4)) * nivel) / 100) + 5;
 
-    const min = Math.floor(baseMin * 0.9);
-    const max = Math.floor(baseMax * 1.1);
-
-    return { min, max };
+    return {
+        min: Math.floor(baseMin * 0.9),
+        max: Math.floor(baseMax * 1.1)
+    };
 }
 
-async function mostrarEvoluciones(cadenaEvolucion, especieSeleccionada) {
+/* ---------- Línea evolutiva ---------- */
+
+function mostrarEvoluciones(cadenaEvolucion, especieSeleccionada) {
     const raiz = cadenaEvolucion.chain;
     elementos.evoluciones.innerHTML = "";
 
-    const nodos = obtenerNodosCadena(raiz);
-    const resultados = await Promise.allSettled(
-        nodos.map(nodo => obtenerJSON(`${API}/pokemon/${encodeURIComponent(nodo.species.name)}`, cachePokemon))
-    );
-
-    const mapaPokemons = new Map();
-
-    resultados.forEach((resultado, indice) => {
-        if (resultado.status === "fulfilled") {
-            mapaPokemons.set(resultado.value.name, resultado.value);
-        } else {
-            console.warn(
-                `No se pudo cargar ${nodos[indice].species.name} para la línea evolutiva.`,
-                resultado.reason
-            );
-        }
-    });
-
-    if (nodos.length === 1) {
+    if (raiz.evolves_to.length === 0) {
         const vacio = document.createElement("p");
         vacio.className = "evolucion-vacia";
         vacio.textContent = "Este Pokémon no tiene evoluciones ni preevoluciones registradas.";
@@ -816,71 +1446,25 @@ async function mostrarEvoluciones(cadenaEvolucion, especieSeleccionada) {
         return;
     }
 
-    if (raiz.species.name === "eevee" && raiz.evolves_to.length > 0) {
-        renderizarEvolucionEevee(raiz, mapaPokemons, especieSeleccionada);
+    if (raiz.species.name === "eevee") {
+        renderizarEvolucionEevee(raiz, especieSeleccionada);
         return;
     }
 
-    if (cadenaTieneRamificaciones(raiz)) {
-        renderizarArbolEvolutivo(raiz, mapaPokemons, especieSeleccionada);
-        return;
-    }
-
-    renderizarLineaEvolutiva(raiz, mapaPokemons, especieSeleccionada);
+    const arbol = document.createElement("div");
+    arbol.className = "evo-arbol";
+    arbol.appendChild(crearNodoEvolucion(raiz, especieSeleccionada));
+    elementos.evoluciones.appendChild(arbol);
 }
 
-function obtenerNodosCadena(raiz) {
-    const nodos = [];
-
-    function recorrer(nodo) {
-        nodos.push(nodo);
-        nodo.evolves_to.forEach(hijo => recorrer(hijo));
-    }
-
-    recorrer(raiz);
-    return nodos;
-}
-
-function cadenaTieneRamificaciones(nodo) {
-    if (nodo.evolves_to.length > 1) {
-        return true;
-    }
-
-    return nodo.evolves_to.some(hijo => cadenaTieneRamificaciones(hijo));
-}
-
-function obtenerSpritePrincipal(pokemon) {
-    return pokemon.sprites.versions?.["generation-v"]?.["black-white"]?.animated?.front_default ||
-        pokemon.sprites.versions?.["generation-v"]?.["black-white"]?.front_default ||
-        pokemon.sprites.other?.home?.front_default ||
-        pokemon.sprites.other?.["official-artwork"]?.front_default ||
-        pokemon.sprites.front_default;
-}
-
-function obtenerSpriteShiny(pokemon) {
-    return pokemon.sprites.versions?.["generation-v"]?.["black-white"]?.animated?.front_shiny ||
-        pokemon.sprites.versions?.["generation-v"]?.["black-white"]?.front_shiny ||
-        pokemon.sprites.other?.home?.front_shiny ||
-        pokemon.sprites.other?.["official-artwork"]?.front_shiny ||
-        pokemon.sprites.front_shiny;
-}
-
-function obtenerSpriteEvolucion(pokemon) {
-    return pokemon.sprites.versions?.["generation-v"]?.["black-white"]?.front_default ||
-        pokemon.sprites.other?.home?.front_default ||
-        pokemon.sprites.front_default;
-}
-
-function crearTarjetaEvolucion(nodo, mapaPokemons, especieSeleccionada, claseExtra = "") {
-    const pokemon = mapaPokemons.get(nodo.species.name);
-    const nombre = pokemon
-        ? capitalizar(pokemon.name)
-        : capitalizar(nodo.species.name);
-    const imagen = pokemon ? obtenerSpriteEvolucion(pokemon) : "";
+function crearTarjetaEvolucion(nodo, especieSeleccionada, claseExtra = "") {
+    const id = extraerId(nodo.species.url);
+    const nombre = nombreEspecie(nodo.species.name);
+    const defecto = indice.especiePorId.get(id)?.defecto || nodo.species.name;
 
     const tarjeta = document.createElement("button");
     tarjeta.type = "button";
-    tarjeta.className = `evolucion-pokemon ${claseExtra}`;
+    tarjeta.className = `evolucion-pokemon ${claseExtra}`.trim();
 
     if (nodo.species.name === especieSeleccionada) {
         tarjeta.classList.add("seleccionado");
@@ -888,20 +1472,14 @@ function crearTarjetaEvolucion(nodo, mapaPokemons, especieSeleccionada, claseExt
 
     const sprite = document.createElement("img");
     sprite.loading = "lazy";
-    sprite.src = imagen || "";
     sprite.alt = `Sprite de ${nombre}`;
+    asignarSpriteConRespaldo(sprite, id, true);
 
     const texto = document.createElement("strong");
     texto.textContent = nombre;
 
     tarjeta.append(sprite, texto);
-
-    tarjeta.addEventListener("click", () => {
-        elementos.buscador.value = nodo.species.name;
-        elementos.limpiarBusqueda.classList.add("visible");
-        buscarPokemon(nodo.species.name);
-        window.scrollTo({ top: 0, behavior: "smooth" });
-    });
+    tarjeta.addEventListener("click", () => irAPokemon(defecto));
 
     return tarjeta;
 }
@@ -909,133 +1487,92 @@ function crearTarjetaEvolucion(nodo, mapaPokemons, especieSeleccionada, claseExt
 function crearCondicionEvolutiva(nodo) {
     const condicion = document.createElement("span");
     condicion.className = "evolucion-condicion";
-    condicion.textContent = formatearCondiciones(nodo.evolution_details);
+    condicion.textContent = formatearCondiciones(nodo.evolution_details, nodo.species.name);
     return condicion;
 }
 
-function renderizarLineaEvolutiva(raiz, mapaPokemons, especieSeleccionada) {
-    const contenedor = document.createElement("div");
-    contenedor.className = "evolucion-linea";
+/* Fila de un Pokémon dentro del árbol evolutivo: sprite a la izquierda, nombre y número */
+function crearFilaEvolucion(nodo, especieSeleccionada) {
+    const id = extraerId(nodo.species.url);
+    const nombre = nombreEspecie(nodo.species.name);
+    const defecto = indice.especiePorId.get(id)?.defecto || nodo.species.name;
 
-    function recorrer(nodo) {
-        contenedor.appendChild(
-            crearTarjetaEvolucion(nodo, mapaPokemons, especieSeleccionada)
-        );
+    const fila = document.createElement("button");
+    fila.type = "button";
+    fila.className = "evo-fila";
 
-        const siguiente = nodo.evolves_to[0];
-
-        if (!siguiente) {
-            return;
-        }
-
-        const flecha = document.createElement("div");
-        flecha.className = "evolucion-flecha";
-
-        const linea = document.createElement("span");
-        linea.className = "flecha-linea";
-        linea.textContent = "→";
-
-        flecha.append(linea, crearCondicionEvolutiva(siguiente));
-        contenedor.appendChild(flecha);
-        recorrer(siguiente);
+    if (nodo.species.name === especieSeleccionada) {
+        fila.classList.add("seleccionado");
+        fila.setAttribute("aria-current", "true");
     }
 
-    recorrer(raiz);
-    elementos.evoluciones.appendChild(contenedor);
+    const sprite = document.createElement("img");
+    sprite.loading = "lazy";
+    sprite.alt = "";
+    asignarSpriteConRespaldo(sprite, id, true);
+
+    const texto = document.createElement("span");
+    texto.className = "evo-nombre";
+    texto.textContent = nombre;
+
+    const numero = document.createElement("small");
+    numero.textContent = formatearNumero(id);
+
+    const datosFila = document.createElement("span");
+    datosFila.className = "evo-datos";
+    datosFila.append(texto, numero);
+
+    fila.append(sprite, datosFila);
+    fila.addEventListener("click", () => irAPokemon(defecto));
+
+    return fila;
 }
 
-function renderizarArbolEvolutivo(raiz, mapaPokemons, especieSeleccionada) {
+/* Un Pokémon y, debajo, sus evoluciones: cada una con su condición escrita en una línea propia */
+function crearNodoEvolucion(nodo, especieSeleccionada) {
     const contenedor = document.createElement("div");
-    contenedor.className = "evolucion-arbol";
+    contenedor.className = "evo-nodo";
+    contenedor.appendChild(crearFilaEvolucion(nodo, especieSeleccionada));
 
-    const raizWrap = document.createElement("div");
-    raizWrap.className = "arbol-raiz";
-    raizWrap.appendChild(crearTarjetaEvolucion(raiz, mapaPokemons, especieSeleccionada));
-    contenedor.appendChild(raizWrap);
-
-    const hijos = crearRamasArbol(raiz, mapaPokemons, especieSeleccionada);
-
-    if (hijos) {
-        contenedor.appendChild(hijos);
+    if (nodo.evolves_to.length === 0) {
+        return contenedor;
     }
 
-    elementos.evoluciones.appendChild(contenedor);
-}
+    const hijos = document.createElement("div");
+    hijos.className = "evo-hijos";
 
-function crearRamasArbol(nodo, mapaPokemons, especieSeleccionada) {
-    if (!nodo.evolves_to || nodo.evolves_to.length === 0) {
-        return null;
-    }
-
-    const contenedor = document.createElement("div");
-    contenedor.className = "arbol-hijos";
-
-    nodo.evolves_to.forEach((hijo, indice) => {
+    nodo.evolves_to.forEach(hijo => {
         const rama = document.createElement("div");
-        rama.className = "arbol-rama";
+        rama.className = "evo-rama";
 
-        const conexion = document.createElement("div");
-        conexion.className = "arbol-conexion";
+        const condicion = document.createElement("p");
+        condicion.className = "evo-condicion";
 
         const flecha = document.createElement("span");
-        flecha.className = "arbol-flecha";
-        flecha.textContent = obtenerFlechaRama(nodo.evolves_to.length, indice);
-        rama.classList.add(obtenerClaseRama(nodo.evolves_to.length, indice));
+        flecha.className = "evo-flecha";
+        flecha.setAttribute("aria-hidden", "true");
+        flecha.textContent = "→";
 
-        conexion.append(flecha, crearCondicionEvolutiva(hijo));
-        rama.appendChild(conexion);
+        const textos = document.createElement("span");
+        textos.className = "evo-textos";
 
-        const cuerpo = document.createElement("div");
-        cuerpo.className = "arbol-cuerpo";
-        cuerpo.appendChild(crearTarjetaEvolucion(hijo, mapaPokemons, especieSeleccionada));
+        listarCondiciones(hijo.evolution_details, hijo.species.name).forEach((alternativa, posicion) => {
+            const linea = document.createElement("span");
+            linea.textContent = posicion === 0 ? alternativa : `o ${alternativa}`;
+            textos.appendChild(linea);
+        });
 
-        const siguientes = crearRamasArbol(hijo, mapaPokemons, especieSeleccionada);
-        if (siguientes) {
-            cuerpo.appendChild(siguientes);
-        }
+        condicion.append(flecha, textos);
 
-        rama.appendChild(cuerpo);
-        contenedor.appendChild(rama);
+        rama.append(condicion, crearNodoEvolucion(hijo, especieSeleccionada));
+        hijos.appendChild(rama);
     });
 
+    contenedor.appendChild(hijos);
     return contenedor;
 }
 
-function obtenerFlechaRama(total, indice) {
-    if (total === 1) {
-        return "→";
-    }
-
-    if (total === 2) {
-        return indice === 0 ? "↗" : "↘";
-    }
-
-    if (indice === 0) {
-        return "↗";
-    }
-
-    if (indice === total - 1) {
-        return "↘";
-    }
-
-    return "→";
-}
-
-function obtenerClaseRama(total, indice) {
-    const flecha = obtenerFlechaRama(total, indice);
-
-    if (flecha === "↗") {
-        return "rama-arriba";
-    }
-
-    if (flecha === "↘") {
-        return "rama-abajo";
-    }
-
-    return "rama-recta";
-}
-
-function renderizarEvolucionEevee(raiz, mapaPokemons, especieSeleccionada) {
+function renderizarEvolucionEevee(raiz, especieSeleccionada) {
     const contenedor = document.createElement("div");
     contenedor.className = "evolucion-eevee";
 
@@ -1044,7 +1581,7 @@ function renderizarEvolucionEevee(raiz, mapaPokemons, especieSeleccionada) {
 
     const centro = document.createElement("div");
     centro.className = "eevee-centro";
-    centro.appendChild(crearTarjetaEvolucion(raiz, mapaPokemons, especieSeleccionada, "eevee-principal"));
+    centro.appendChild(crearTarjetaEvolucion(raiz, especieSeleccionada, "eevee-principal"));
 
     const posiciones = [
         ["nw", "↖"],
@@ -1057,14 +1594,14 @@ function renderizarEvolucionEevee(raiz, mapaPokemons, especieSeleccionada) {
         ["se", "↘"]
     ];
 
-    raiz.evolves_to.forEach((hijo, indice) => {
-        const posicion = posiciones[indice] || posiciones[posiciones.length - 1];
+    raiz.evolves_to.forEach((hijo, posicionHijo) => {
+        const posicion = posiciones[posicionHijo] || posiciones[posiciones.length - 1];
         const rama = document.createElement("div");
         rama.className = `eevee-rama eevee-${posicion[0]}`;
 
         const contenido = document.createElement("div");
         contenido.className = "eevee-contenido";
-        contenido.appendChild(crearTarjetaEvolucion(hijo, mapaPokemons, especieSeleccionada));
+        contenido.appendChild(crearTarjetaEvolucion(hijo, especieSeleccionada));
         contenido.appendChild(crearCondicionEvolutiva(hijo));
 
         const flecha = document.createElement("span");
@@ -1079,170 +1616,324 @@ function renderizarEvolucionEevee(raiz, mapaPokemons, especieSeleccionada) {
     elementos.evoluciones.appendChild(contenedor);
 }
 
-function formatearCondiciones(detalles) {
+/* ---------- Condiciones de evolución ---------- */
+
+/* PokéAPI guarda las condiciones de cada generación: nos quedamos solo con las vigentes */
+function detallesVigentes(detalles) {
     if (!Array.isArray(detalles) || detalles.length === 0) {
-        return "Evolución";
+        return [];
     }
 
-    const condiciones = new Set();
+    const porDefecto = detalles.filter(detalle => detalle.is_default);
 
-    detalles.forEach(detalle => {
-        if (detalle.min_level !== null) {
-            condiciones.add(`Nivel ${detalle.min_level}`);
-        }
+    if (porDefecto.length > 0) {
+        return porDefecto;
+    }
 
-        if (detalle.min_happiness !== null) {
-            condiciones.add(`Amistad ${detalle.min_happiness}`);
-        }
+    const conVersion = detalles.filter(detalle => detalle.version_group?.url);
 
-        if (detalle.min_affection !== null) {
-            condiciones.add(`Afecto ${detalle.min_affection}`);
-        }
+    if (conVersion.length > 0) {
+        const masReciente = Math.max(...conVersion.map(detalle => extraerId(detalle.version_group.url)));
+        return conVersion.filter(detalle => extraerId(detalle.version_group.url) === masReciente);
+    }
 
-        if (detalle.min_beauty !== null) {
-            condiciones.add(`Belleza ${detalle.min_beauty}`);
-        }
+    return detalles;
+}
 
-        if (detalle.item) {
-            condiciones.add(traducirItem(detalle.item.name));
-        }
+function nombreRegion(nombre) {
+    return regiones[nombre] || capitalizar(nombre);
+}
 
-        if (detalle.held_item) {
-            condiciones.add(`Con ${traducirItem(detalle.held_item.name)}`);
-        }
+function nombreFormaRegional(nombreForma) {
+    const region = Object.keys(regiones).find(r => String(nombreForma).endsWith(`-${r}`));
+    return region ? nombreRegion(region) : null;
+}
 
-        if (detalle.known_move) {
-            condiciones.add(`Movimiento: ${capitalizar(detalle.known_move.name)}`);
-        }
+function describirDetalle(detalle, especieEvolucion = "") {
+    const partes = [];
+    const disparador = detalle.trigger?.name;
+    const veces = detalle.min_move_count ? ` ${detalle.min_move_count} veces` : "";
 
-        if (detalle.known_move_type) {
-            condiciones.add(`Movimiento de tipo ${nombresTipos[detalle.known_move_type.name] || capitalizar(detalle.known_move_type.name)}`);
-        }
-
-        if (detalle.location) {
-            condiciones.add(`Lugar: ${capitalizar(detalle.location.name.replaceAll("-", " "))}`);
-        }
-
-        if (detalle.time_of_day) {
-            condiciones.add(detalle.time_of_day === "day" ? "De día" : "De noche");
-        }
-
-        if (detalle.gender !== null) {
-            condiciones.add(detalle.gender === 1 ? "Hembra" : "Macho");
-        }
-
-        if (detalle.turn_upside_down) {
-            condiciones.add("Con la consola invertida");
-        }
-
-        if (detalle.needs_overworld_rain) {
-            condiciones.add("Mientras llueve");
-        }
-
-        if (detalle.party_species) {
-            condiciones.add(`Con ${capitalizar(detalle.party_species.name)} en el equipo`);
-        }
-
-        if (detalle.party_type) {
-            condiciones.add(`Con un Pokémon de tipo ${nombresTipos[detalle.party_type.name] || capitalizar(detalle.party_type.name)} en el equipo`);
-        }
-
-        if (detalle.trade_species) {
-            condiciones.add(`Intercambio por ${capitalizar(detalle.trade_species.name)}`);
-        }
-
-        if (detalle.relative_physical_stats !== null) {
-            if (detalle.relative_physical_stats === 1) {
-                condiciones.add("Ataque > Defensa");
-            } else if (detalle.relative_physical_stats === -1) {
-                condiciones.add("Ataque < Defensa");
-            } else if (detalle.relative_physical_stats === 0) {
-                condiciones.add("Ataque = Defensa");
+    switch (disparador) {
+        case "level-up":
+            if (detalle.min_level !== null && detalle.min_level !== undefined) {
+                partes.push(`Nivel ${detalle.min_level}`);
             }
-        }
+            break;
+        case "in-battle-level-up":
+            partes.push(`Nivel ${detalle.min_level ?? "?"} en combate`);
+            break;
+        case "trade":
+            partes.push(
+                detalle.trade_species
+                    ? `Intercambio por ${nombreEspecie(detalle.trade_species.name)}`
+                    : detalle.held_item
+                        ? `Intercambio con ${traducirItem(detalle.held_item.name)}`
+                        : "Intercambio"
+            );
+            break;
+        case "use-item":
+            if (detalle.item) {
+                partes.push(traducirItem(detalle.item.name));
+            } else {
+                partes.push("Usar objeto");
+            }
+            break;
+        case "shed":
+            partes.push("Hueco libre en el equipo + Poké Ball");
+            break;
+        case "spin":
+            partes.push("Girar con un dulce");
+            break;
+        case "use-move":
+            partes.push(`Usar ${traducirMovimiento(detalle.used_move?.name)}${veces}`);
+            break;
+        case "strong-style-move":
+            partes.push(`Usar ${traducirMovimiento(detalle.used_move?.name)}${veces} (estilo fuerte)`);
+            break;
+        case "agile-style-move":
+            partes.push(`Usar ${traducirMovimiento(detalle.used_move?.name)}${veces} (estilo rápido)`);
+            break;
+        case "recoil-damage":
+            partes.push(`Recibir ${detalle.min_damage_taken ?? "?"} de daño por retroceso`);
+            break;
+        case "take-damage":
+            partes.push(`Recibir ${detalle.min_damage_taken ?? "?"} de daño`);
+            break;
+        case "three-critical-hits":
+            partes.push("Dar 3 golpes críticos en un combate");
+            break;
+        case "three-defeated-bisharp":
+            partes.push("Derrotar a 3 Bisharp líderes");
+            break;
+        case "gimmighoul-coins":
+            partes.push("Con 999 monedas de Gimmighoul");
+            break;
+        case "meltan-candies":
+            partes.push("Dar 400 caramelos de Meltan");
+            break;
+        case "tower-of-darkness":
+            partes.push("Torre Oscura");
+            break;
+        case "tower-of-waters":
+            partes.push("Torre de las Aguas");
+            break;
+        default:
+            if (disparador) {
+                partes.push(prettificar(disparador));
+            }
+    }
 
-        if (detalle.trigger?.name === "trade" && condiciones.size === 0) {
-            condiciones.add("Intercambio");
-        }
+    if (disparador !== "level-up" && disparador !== "in-battle-level-up"
+        && detalle.min_level !== null && detalle.min_level !== undefined) {
+        partes.push(`Nivel ${detalle.min_level}`);
+    }
 
-        if (detalle.trigger?.name === "shed" && condiciones.size === 0) {
-            condiciones.add("Al subir de nivel con espacio y Poké Ball");
-        }
+    if (detalle.item && disparador !== "use-item") {
+        partes.push(`Usar ${traducirItem(detalle.item.name)}`);
+    }
 
-        if (detalle.trigger?.name === "level-up" && condiciones.size === 0) {
-            condiciones.add("Subir de nivel");
-        }
+    if (detalle.held_item && disparador !== "trade") {
+        partes.push(`Con ${traducirItem(detalle.held_item.name)} equipado`);
+    }
 
-        if (detalle.trigger?.name === "use-item" && condiciones.size === 0) {
-            condiciones.add("Usar objeto");
-        }
+    if (detalle.min_happiness !== null && detalle.min_happiness !== undefined) {
+        partes.push(`Amistad ≥${detalle.min_happiness}`);
+    }
 
-        if (detalle.trigger?.name === "three-critical-hits" && condiciones.size === 0) {
-            condiciones.add("Tres golpes críticos");
-        }
+    if (detalle.min_affection !== null && detalle.min_affection !== undefined) {
+        partes.push(`Afecto ≥${detalle.min_affection}`);
+    }
 
-        if (detalle.trigger?.name === "take-damage" && condiciones.size === 0) {
-            condiciones.add("Recibir daño");
-        }
-    });
+    if (detalle.min_beauty !== null && detalle.min_beauty !== undefined) {
+        partes.push(`Belleza ≥${detalle.min_beauty}`);
+    }
 
-    return [...condiciones].join(" + ") || "Evolución";
+    if (detalle.min_steps) {
+        partes.push(`Caminar ${detalle.min_steps} pasos en modo Let's Go`);
+    }
+
+    if (detalle.known_move) {
+        partes.push(`Sabiendo ${traducirMovimiento(detalle.known_move.name)}`);
+    }
+
+    if (detalle.known_move_type) {
+        partes.push(`Mov. tipo ${traducirTipo(detalle.known_move_type.name)}`);
+    }
+
+    if (detalle.location) {
+        partes.push(`En ${traducirLugar(detalle.location.name)}`);
+    }
+
+    if (detalle.near_special_rock) {
+        partes.push("Cerca de una roca especial");
+    }
+
+    if (detalle.time_of_day) {
+        const momentos = {
+            day: "De día",
+            night: "De noche",
+            dusk: "Al atardecer",
+            "full-moon": "Con luna llena"
+        };
+        partes.push(momentos[detalle.time_of_day] || prettificar(detalle.time_of_day));
+    }
+
+    if (detalle.gender !== null && detalle.gender !== undefined) {
+        partes.push(detalle.gender === 1 ? "Hembra" : "Macho");
+    }
+
+    if (detalle.turn_upside_down) {
+        partes.push("Con la consola boca abajo");
+    }
+
+    if (detalle.needs_overworld_rain) {
+        partes.push("Mientras llueve");
+    }
+
+    if (detalle.needs_multiplayer) {
+        partes.push("En modo multijugador");
+    }
+
+    if (detalle.party_species) {
+        partes.push(`Con ${nombreEspecie(detalle.party_species.name)} en el equipo`);
+    }
+
+    if (detalle.party_type) {
+        partes.push(`Con un Pokémon de tipo ${traducirTipo(detalle.party_type.name)} en el equipo`);
+    }
+
+    if (detalle.relative_physical_stats !== null && detalle.relative_physical_stats !== undefined) {
+        partes.push({ 1: "Ataque > Defensa", "-1": "Ataque < Defensa", 0: "Ataque = Defensa" }[detalle.relative_physical_stats]);
+    }
+
+    const formaEvolucionada = detalle.evolved_pokemon_form?.name
+        ? etiquetaForma(detalle.evolved_pokemon_form.name, especieEvolucion || detalle.evolved_pokemon_form.name.split("-")[0])
+        : "";
+
+    if (Array.isArray(detalle.allowed_natures) && detalle.allowed_natures.length > 0) {
+        partes.push(
+            detalle.allowed_natures.length <= 4 || !formaEvolucionada
+                ? `Naturaleza: ${detalle.allowed_natures.map(natura => traducirNaturaleza(natura.name)).join(", ")}`
+                : `Naturaleza propia de la forma ${formaEvolucionada}`
+        );
+    }
+
+    const probabilidad = detalle.condition_expression?.percentage_chance;
+    let texto = partes.filter(Boolean).join(" + ");
+
+    if (probabilidad !== null && probabilidad !== undefined) {
+        texto += ` (${probabilidad}%${formaEvolucionada ? ` · ${formaEvolucionada}` : ""})`;
+    }
+
+    if (detalle.region && texto) {
+        const region = nombreRegion(detalle.region.name);
+        const formaDeRegion = nombreFormaRegional(detalle.evolved_pokemon_form?.name);
+        texto += formaDeRegion ? ` (en ${region}: forma de ${formaDeRegion})` : ` (en ${region})`;
+    }
+
+    const formaRegional = nombreFormaRegional(detalle.required_pokemon_form?.name);
+
+    return formaRegional && texto ? `Forma de ${formaRegional}: ${texto}` : texto;
 }
 
-function traducirItem(nombre) {
-    return nombresItems[nombre] || capitalizar(nombre.replaceAll("-", " "));
+/* Devuelve cada alternativa de evolución como un texto independiente */
+function listarCondiciones(detalles, especieEvolucion = "") {
+    const vigentes = detallesVigentes(detalles);
+
+    if (vigentes.length === 0) {
+        return ["Evolución"];
+    }
+
+    /* Alcremie tiene decenas de combinaciones de dulce, sabor y giro */
+    if (vigentes.every(detalle => detalle.trigger?.name === "spin")) {
+        return ["Girar con un dulce"];
+    }
+
+    const textos = [...new Set(vigentes.map(detalle => describirDetalle(detalle, especieEvolucion)).filter(Boolean))];
+    const sinPrefijo = texto => texto.replace(/^Forma de [^:]+: /, "");
+    const esRegional = texto => /^Forma de [^:]+: /.test(texto);
+
+    /* Si la misma condición aparece con y sin forma regional, basta con una */
+    const alternativas = textos.filter(texto => !esRegional(texto)
+        || !textos.some(otro => otro !== texto && !esRegional(otro) && otro === sinPrefijo(texto)));
+
+    if (alternativas.length === 0) {
+        return ["Evolución"];
+    }
+
+    if (alternativas.length > 4) {
+        return [...alternativas.slice(0, 4), `…y ${alternativas.length - 4} más`];
+    }
+
+    return alternativas;
 }
 
-function calcularEfectividad(defensasTipo) {
-    const multiplicadores = Object.fromEntries(Object.keys(nombresTipos).map(tipo => [tipo, 1]));
+/* Versión en una sola línea (para los huecos pequeños de la rejilla de Eevee) */
+function formatearCondiciones(detalles, especieEvolucion = "") {
+    return listarCondiciones(detalles, especieEvolucion).join(" o ");
+}
 
-    defensasTipo.forEach(tipo => {
-        const relaciones = tipo.damage_relations;
+/* ---------- Debilidades y resistencias ---------- */
 
-        relaciones.double_damage_from.forEach(ref => {
-            multiplicadores[ref.name] *= 2;
+function calcularEfectividad(relaciones) {
+    const multiplicadores = Object.fromEntries(ordenTipos.map(tipo => [tipo, 1]));
+
+    relaciones.forEach(relacion => {
+        relacion.dobleDe.forEach(tipo => {
+            if (tipo in multiplicadores) multiplicadores[tipo] *= 2;
         });
 
-        relaciones.half_damage_from.forEach(ref => {
-            multiplicadores[ref.name] *= 0.5;
+        relacion.mitadDe.forEach(tipo => {
+            if (tipo in multiplicadores) multiplicadores[tipo] *= 0.5;
         });
 
-        relaciones.no_damage_from.forEach(ref => {
-            multiplicadores[ref.name] *= 0;
+        relacion.nadaDe.forEach(tipo => {
+            if (tipo in multiplicadores) multiplicadores[tipo] *= 0;
         });
     });
 
     return multiplicadores;
 }
 
-function renderizarDebilidadesYFortalezas(tipos) {
-    const multiplicadores = calcularEfectividad(tipos);
-    const debilidades = Object.entries(multiplicadores)
+function ordenarPorTipo(lista) {
+    return lista.sort((a, b) => ordenTipos.indexOf(a[0]) - ordenTipos.indexOf(b[0]));
+}
+
+function renderizarEfectividad(relaciones) {
+    if (!relaciones) {
+        ["debilidades", "resistencias", "inmunidades", "ofensivas"].forEach(id => {
+            elementos[id].innerHTML = '<span class="grupo-vacio">No disponible</span>';
+        });
+        return;
+    }
+
+    const multiplicadores = calcularEfectividad(relaciones);
+    const entradas = ordenarPorTipo(Object.entries(multiplicadores));
+
+    const debilidades = entradas
         .filter(([, valor]) => valor > 1)
         .sort((a, b) => b[1] - a[1]);
-    const resistencias = Object.entries(multiplicadores)
+    const resistencias = entradas
         .filter(([, valor]) => valor > 0 && valor < 1)
         .sort((a, b) => a[1] - b[1]);
-    const inmunidades = Object.entries(multiplicadores)
-        .filter(([, valor]) => valor === 0);
+    const inmunidades = entradas.filter(([, valor]) => valor === 0);
 
     renderizarGrupoTipos(elementos.debilidades, debilidades, "No hay debilidades especiales");
     renderizarGrupoTipos(elementos.resistencias, resistencias, "No tiene resistencias registradas");
-    renderizarGrupoTipos(elementos.inmunidades, inmunidades.map(([tipo, valor]) => [tipo, valor]), "Ninguna");
+    renderizarGrupoTipos(elementos.inmunidades, inmunidades, "Ninguna");
 
     const ofensivas = new Set();
-    tipos.forEach(tipo => {
-        tipo.damage_relations.double_damage_to.forEach(ref => ofensivas.add(ref.name));
-    });
+    relaciones.forEach(relacion => relacion.dobleA.forEach(tipo => ofensivas.add(tipo)));
 
-    const listaOfensiva = [...ofensivas].sort();
-    renderizarGrupoTipos(elementos.ofensivas, listaOfensiva.map(tipo => [tipo, 2]), "Ninguna");
+    const listaOfensiva = ordenarPorTipo([...ofensivas].map(tipo => [tipo, 2]));
+    renderizarGrupoTipos(elementos.ofensivas, listaOfensiva, "Ninguna");
 }
 
-function renderizarGrupoTipos(contenedor, datos, textoVacio) {
+function renderizarGrupoTipos(contenedor, datosGrupo, textoVacio) {
     contenedor.innerHTML = "";
 
-    if (datos.length === 0) {
+    if (datosGrupo.length === 0) {
         const vacio = document.createElement("span");
         vacio.className = "grupo-vacio";
         vacio.textContent = textoVacio;
@@ -1250,34 +1941,17 @@ function renderizarGrupoTipos(contenedor, datos, textoVacio) {
         return;
     }
 
-    datos.forEach(([tipo, multiplicador]) => {
+    datosGrupo.forEach(([tipo, multiplicador]) => {
         contenedor.appendChild(crearChipTipo(tipo, multiplicador));
     });
 }
 
 function formatearMultiplicador(valor) {
-    if (valor === 0) {
-        return "×0";
-    }
-
-    if (valor === 0.25) {
-        return "×¼";
-    }
-
-    if (valor === 0.5) {
-        return "×½";
-    }
-
-    if (valor === 4) {
-        return "×4";
-    }
-
-    if (valor === 2) {
-        return "×2";
-    }
-
-    return `×${valor}`;
+    const conocidos = { 0: "×0", 0.25: "×¼", 0.5: "×½", 2: "×2", 4: "×4" };
+    return conocidos[valor] || `×${valor}`;
 }
+
+/* ---------- Estado de la interfaz ---------- */
 
 function mostrarEstado(texto) {
     elementos.estado.textContent = texto;
@@ -1288,39 +1962,7 @@ function ocultarEstado() {
     elementos.estado.classList.remove("visible");
 }
 
-function guardarUltimoPokemon(nombre) {
-    localStorage.setItem("ultimoPokemon", nombre);
-}
-
-function cargarUltimoPokemon() {
-    const guardado = localStorage.getItem("ultimoPokemon");
-
-    if (guardado) {
-        return guardado;
-    }
-
-    return "zekrom";
-}
-
-async function buscarEntrada(entrada) {
-    const nombre = normalizar(entrada);
-    if (!nombre) {
-        return;
-    }
-
-    const habilidadExacta = listaHabilidades.find(habilidad => normalizar(habilidad.name) === nombre);
-
-    if (habilidadExacta) {
-        await buscarHabilidad(habilidadExacta.name);
-        return;
-    }
-
-    const encontrado = await buscarPokemon(nombre);
-
-    if (!encontrado) {
-        await buscarHabilidad(nombre);
-    }
-}
+/* ---------- Eventos ---------- */
 
 function prepararEventos() {
     elementos.buscador.addEventListener("input", () => {
@@ -1331,7 +1973,7 @@ function prepararEventos() {
 
     elementos.buscador.addEventListener("focus", () => {
         if (!elementos.buscador.value.trim()) {
-            actualizarSugerenciasAleatorias();
+            actualizarSugerenciasIniciales();
         } else {
             mostrarSugerencias(elementos.buscador.value);
         }
@@ -1364,8 +2006,18 @@ function prepararEventos() {
 
     elementos.busquedaForm.addEventListener("submit", event => {
         event.preventDefault();
+        elementos.buscador.blur();
         buscarEntrada(elementos.buscador.value);
     });
+
+    /* Tocar en cualquier punto de la barra (también en la lupa) enfoca el campo */
+    elementos.busquedaForm.addEventListener("click", event => {
+        if (event.target === elementos.busquedaForm) {
+            elementos.buscador.focus();
+        }
+    });
+
+    elementos.atrasBoton.addEventListener("click", volverAtras);
 
     elementos.limpiarBusqueda.addEventListener("click", () => {
         elementos.buscador.value = "";
@@ -1376,7 +2028,7 @@ function prepararEventos() {
 
     document.addEventListener("click", event => {
         if (!event.target.closest(".buscador-wrap")) {
-            elementos.sugerencias.classList.remove("visible");
+            ocultarSugerencias();
         }
     });
 
@@ -1387,126 +2039,111 @@ function prepararEventos() {
         }
 
         if (event.key === "Escape") {
-            elementos.sugerencias.classList.remove("visible");
+            ocultarSugerencias();
             elementos.buscador.blur();
         }
     });
 }
 
+/* ---------- Deslizar para cambiar de Pokémon ---------- */
+
+function dentroDeScrollHorizontal(elemento) {
+    for (let actual = elemento; actual && actual !== document.body; actual = actual.parentElement) {
+        const overflowX = getComputedStyle(actual).overflowX;
+
+        if ((overflowX === "auto" || overflowX === "scroll") && actual.scrollWidth > actual.clientWidth + 1) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 function prepararSwipePokemon() {
-    let inicioX = 0;
-    let inicioY = 0;
-    let movimientoHorizontal = false;
+    let inicio = null;
 
     document.addEventListener("touchstart", event => {
+        inicio = null;
+
         if (event.touches.length !== 1) {
-            movimientoHorizontal = false;
             return;
         }
 
         const objetivo = event.target;
 
-        if (objetivo.closest("input, button, a, textarea, select")) {
-            movimientoHorizontal = false;
+        if (!(objetivo instanceof Element)
+            || objetivo.closest("input, button, a, textarea, select")
+            || dentroDeScrollHorizontal(objetivo)) {
             return;
         }
 
-        inicioX = event.touches[0].clientX;
-        inicioY = event.touches[0].clientY;
-        movimientoHorizontal = false;
+        inicio = { x: event.touches[0].clientX, y: event.touches[0].clientY };
     }, { passive: true });
 
-    document.addEventListener("touchmove", event => {
-        if (!inicioX && !inicioY) {
-            return;
-        }
-
-        const actualX = event.touches[0].clientX;
-        const actualY = event.touches[0].clientY;
-        const desplazamientoX = actualX - inicioX;
-        const desplazamientoY = actualY - inicioY;
-
-        if (Math.abs(desplazamientoX) > 20 && Math.abs(desplazamientoX) > Math.abs(desplazamientoY)) {
-            movimientoHorizontal = true;
-        }
+    document.addEventListener("touchcancel", () => {
+        inicio = null;
     }, { passive: true });
 
-    const finalizarSwipe = event => {
-        if (!movimientoHorizontal) {
-            inicioX = 0;
-            inicioY = 0;
+    document.addEventListener("touchend", event => {
+        const origen = inicio;
+        inicio = null;
+
+        const toque = event.changedTouches?.[0];
+
+        if (!origen || !toque || !elementos.ficha.classList.contains("visible") || especieActualId <= 0) {
             return;
         }
 
-        const toqueFinal = event.changedTouches?.[0];
+        const desplazamientoX = toque.clientX - origen.x;
+        const desplazamientoY = toque.clientY - origen.y;
 
-        if (!toqueFinal) {
-            inicioX = 0;
-            inicioY = 0;
-            movimientoHorizontal = false;
+        /* Gesto claramente horizontal y suficientemente largo */
+        if (Math.abs(desplazamientoX) < 60 || Math.abs(desplazamientoX) < Math.abs(desplazamientoY) * 1.6) {
             return;
         }
 
-        const finalX = toqueFinal.clientX;
-        const desplazamientoX = finalX - inicioX;
-        const minimoSwipe = 60;
+        const siguienteId = desplazamientoX > 0 ? especieActualId - 1 : especieActualId + 1;
 
-        inicioX = 0;
-        inicioY = 0;
-        movimientoHorizontal = false;
-
-        if (Math.abs(desplazamientoX) < minimoSwipe || listaPokemon.length === 0) {
+        if (siguienteId < 1 || siguienteId > indice.maximoEspecie) {
             return;
         }
 
-        const numeroActual = Number(elementos.numeroPokedex.textContent.replace("#", ""));
+        /* La API acepta el número de la Pokédex como identificador */
+        irAPokemon(indice.especiePorId.get(siguienteId)?.defecto ?? String(siguienteId));
+    }, { passive: true });
+}
 
-        if (!Number.isFinite(numeroActual) || numeroActual <= 0) {
-            return;
-        }
+/* ---------- Arranque ---------- */
 
-        const siguienteId = desplazamientoX > 0 ? numeroActual - 1 : numeroActual + 1;
-
-        if (siguienteId < 1 || siguienteId > listaPokemon.length) {
-            return;
-        }
-
-        const siguiente = listaPokemon.find(pokemon => pokemon.id === siguienteId);
-
-        if (!siguiente) {
-            return;
-        }
-
-        elementos.buscador.value = siguiente.name;
-        elementos.limpiarBusqueda.classList.add("visible");
-        buscarPokemon(siguiente.name);
-        window.scrollTo({ top: 0, behavior: "smooth" });
-    };
-
-    document.addEventListener("touchend", finalizarSwipe, { passive: true });
-    document.addEventListener("touchcancel", finalizarSwipe, { passive: true });
+function registrarServiceWorker() {
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./service-worker.js").catch(error => {
+            console.error("Error registrando Service Worker:", error);
+        });
+    }
 }
 
 async function iniciarApp() {
     iniciarElementos();
     prepararEventos();
 
-    const inicial = cargarUltimoPokemon();
+    if (SWIPE_ACTIVO) {
+        prepararSwipePokemon();
+    }
+
+    datosListos = cargarDatos();
 
     elementos.buscador.value = "";
     elementos.limpiarBusqueda.classList.remove("visible");
 
-    await buscarPokemon(inicial, { inicial: true });
-    elementos.sugerencias.classList.remove("visible");
+    let resultado = await buscarPokemon(cargarUltimoPokemon(), { inicial: true, silencioso404: true });
 
-    cargarListadoPokemon();
-    cargarListadoHabilidades();
-
-    if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("./service-worker.js").catch(error => {
-            console.error("Error registrando Service Worker:", error);
-        });
+    if (resultado === "404") {
+        resultado = await buscarPokemon("zekrom", { inicial: true });
     }
+
+    ocultarSugerencias();
+    registrarServiceWorker();
 }
 
 iniciarApp();
