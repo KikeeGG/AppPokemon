@@ -67,12 +67,26 @@ input {
     inset: -11%;
     background-position: center;
     background-repeat: no-repeat;
-    background-size: cover, min(1000px, 130vw);
-    background-position: center, center;
+    background-size: cover;
     opacity: 0.32;
     filter: blur(34px) saturate(1.12);
     transform: scale(1.08);
     transition: background-image 0.5s ease, opacity 0.5s ease;
+}
+
+/* Ilustración del Pokémon: sus bordes se desvanecen para que el color nunca acabe en un corte seco */
+.fondo-arte {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: min(1000px, 130vw);
+    aspect-ratio: 1;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    transform: translate(-50%, -50%);
+    -webkit-mask-image: radial-gradient(closest-side, #000 55%, transparent 100%);
+    mask-image: radial-gradient(closest-side, #000 55%, transparent 100%);
 }
 
 .fondo-desenfoque {
@@ -596,7 +610,7 @@ input {
 
 .hero h1 {
     max-width: 100%;
-    overflow-wrap: anywhere;
+    overflow-wrap: normal;
     font-size: clamp(34px, 9vw, 50px);
     font-weight: 650;
     line-height: 0.98;
@@ -909,139 +923,97 @@ input {
     text-align: center;
 }
 
+/* Eevee: rejilla de 5 × 5. Las columnas y filas pares (estrechas) son para las flechas. */
 .evolucion-eevee {
-    position: relative;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-rows: repeat(3, minmax(112px, auto));
-    gap: 6px;
+    grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr) 22px minmax(0, 1fr);
+    grid-template-rows: auto 26px auto 26px auto;
+    column-gap: 2px;
+    row-gap: 2px;
     width: 100%;
     min-width: 0;
-    min-height: 350px;
     margin-inline: auto;
-    padding: 6px;
-    overflow: hidden;
+    padding: 4px 0;
 }
 
 .eevee-centro {
-    position: relative;
-    z-index: 4;
-    grid-column: 2;
-    grid-row: 2;
+    grid-column: 3;
+    grid-row: 3;
     display: grid;
-    place-items: center;
+    align-self: start;
+    justify-items: center;
+}
+
+.eevee-rama {
+    display: grid;
+    align-self: start;
+    justify-items: center;
+    align-content: start;
+    gap: 4px;
+    min-width: 0;
+}
+
+.eevee-centro .evolucion-pokemon,
+.eevee-rama .evolucion-pokemon {
+    flex: none;
+    width: 100%;
+    min-width: 0;
+    max-width: 98px;
+    min-height: 104px;
+    padding-inline: 4px;
 }
 
 .eevee-centro .evolucion-pokemon {
-    width: 104px;
-    min-width: 104px;
-    min-height: 112px;
     border-color: color-mix(in srgb, var(--accent) 55%, white);
     background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 20%, rgba(255,255,255,.14)), rgba(255,255,255,.05));
     box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 10px 28px rgba(0,0,0,.16), 0 0 0 1px color-mix(in srgb, var(--accent) 16%, transparent);
 }
 
-.eevee-rama {
-    position: relative;
-    z-index: 3;
-    display: grid;
-    place-items: center;
-    min-width: 0;
-    align-content: center;
-    gap: 3px;
-}
-
-.eevee-rama .evolucion-pokemon {
-    width: 94px;
-    min-width: 94px;
-    min-height: 101px;
-}
-
+.eevee-centro .evolucion-pokemon img,
 .eevee-rama .evolucion-pokemon img {
-    width: 62px;
-    height: 62px;
+    width: 60px;
+    height: 60px;
+}
+
+.eevee-rama .evolucion-condicion {
+    max-width: 100%;
+    padding-inline: 5px;
 }
 
 .eevee-flecha {
     display: grid;
     place-items: center;
-    width: 24px;
-    height: 24px;
-    border: 1px solid rgba(255,255,255,.12);
+    align-self: center;
+    justify-self: center;
+    width: 22px;
+    height: 22px;
+    border: 1px solid rgba(255,255,255,.14);
     border-radius: 50%;
-    color: rgba(255,255,255,.84);
-    background: rgba(255,255,255,.07);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    font-size: 13px;
+    color: rgba(255,255,255,.9);
+    background: rgba(255,255,255,.09);
+    font-size: 12px;
     line-height: 1;
 }
 
-.eevee-contenido {
-    display: grid;
-    justify-items: center;
-    gap: 3px;
-}
+/* Tarjetas: columnas 1, 3 y 5; filas 1, 3 y 5 */
+.eevee-rama.eevee-nw { grid-area: 1 / 1; }
+.eevee-rama.eevee-n { grid-area: 1 / 3; }
+.eevee-rama.eevee-ne { grid-area: 1 / 5; }
+.eevee-rama.eevee-w { grid-area: 3 / 1; }
+.eevee-rama.eevee-e { grid-area: 3 / 5; }
+.eevee-rama.eevee-sw { grid-area: 5 / 1; }
+.eevee-rama.eevee-s { grid-area: 5 / 3; }
+.eevee-rama.eevee-se { grid-area: 5 / 5; }
 
-.eevee-contenido .evolucion-condicion {
-    max-width: 100px;
-}
-
-.eevee-conexiones {
-    display: none;
-}
-
-.eevee-nw {
-    grid-column: 1;
-    grid-row: 1;
-}
-
-.eevee-n {
-    grid-column: 2;
-    grid-row: 1;
-}
-
-.eevee-ne {
-    grid-column: 3;
-    grid-row: 1;
-}
-
-.eevee-w {
-    grid-column: 1;
-    grid-row: 2;
-}
-
-.eevee-e {
-    grid-column: 3;
-    grid-row: 2;
-}
-
-.eevee-sw {
-    grid-column: 1;
-    grid-row: 3;
-}
-
-.eevee-s {
-    grid-column: 2;
-    grid-row: 3;
-}
-
-.eevee-se {
-    grid-column: 3;
-    grid-row: 3;
-}
-
-.eevee-nw::before,
-.eevee-n::before,
-.eevee-ne::before,
-.eevee-w::before,
-.eevee-e::before,
-.eevee-sw::before,
-.eevee-s::before,
-.eevee-se::before {
-    display: none;
-}
+/* Flechas: en el hueco entre Eevee y cada evolución */
+.eevee-flecha.eevee-nw { grid-area: 2 / 2; }
+.eevee-flecha.eevee-n { grid-area: 2 / 3; }
+.eevee-flecha.eevee-ne { grid-area: 2 / 4; }
+.eevee-flecha.eevee-w { grid-area: 3 / 2; align-self: start; margin-top: 41px; }
+.eevee-flecha.eevee-e { grid-area: 3 / 4; align-self: start; margin-top: 41px; }
+.eevee-flecha.eevee-sw { grid-area: 4 / 2; }
+.eevee-flecha.eevee-s { grid-area: 4 / 3; }
+.eevee-flecha.eevee-se { grid-area: 4 / 4; }
 
 .efectividad {
     display: grid;
@@ -1680,4 +1652,9 @@ footer strong {
     font-size: 24px;
     line-height: 1;
     cursor: pointer;
+}
+
+/* Último recurso para nombres larguísimos: partir la palabra */
+.hero h1.nombre-partido {
+    overflow-wrap: anywhere;
 }

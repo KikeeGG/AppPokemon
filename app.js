@@ -229,6 +229,7 @@ function iniciarElementos() {
         "habilidadDetalle",
         "ficha",
         "fondoPokemon",
+        "fondoArte",
         "pokemonSprite",
         "shinyBoton",
         "numeroPokedex",
@@ -1240,13 +1241,15 @@ function mostrarPokemon(pokemon, species) {
     }
 
     elementos.pokemonSprite.alt = `Sprite de ${nombre}`;
-    elementos.fondoPokemon.style.backgroundImage = `url("${fondoTipo}"), url("${imagenFondo || ""}")`;
+    elementos.fondoPokemon.style.backgroundImage = `url("${fondoTipo}")`;
+    elementos.fondoArte.style.backgroundImage = imagenFondo ? `url("${imagenFondo}")` : "none";
 
     document.documentElement.style.setProperty("--accent", coloresTipos[tipoPrincipal] || "#ffffff");
 
     document.title = `${nombre} · Ultraball`;
     document.querySelector('meta[name="theme-color"]').setAttribute("content", coloresTipos[tipoPrincipal] || "#233044");
 
+    ajustarNombrePokemon();
     renderizarTiposPokemon(pokemon.types);
     renderizarFormas(pokemon, species);
     renderizarHabilidades(pokemon);
@@ -1483,6 +1486,29 @@ function renderizarListaAtaques(lista, metodo) {
             ataquesEstado.limite = Infinity;
             renderizarListaAtaques(lista, metodo);
         };
+    }
+}
+
+/* Los nombres largos (p. ej. Melenaleteo) se encogen hasta caber en una línea en vez de partirse a mitad de palabra */
+function ajustarNombrePokemon() {
+    const titulo = elementos.nombrePokemon;
+
+    titulo.style.fontSize = "";
+    titulo.classList.remove("nombre-partido");
+
+    if (!titulo.clientWidth) {
+        return;
+    }
+
+    let tamano = parseFloat(getComputedStyle(titulo).fontSize);
+
+    while (titulo.scrollWidth > titulo.clientWidth + 1 && tamano > 22) {
+        tamano -= 1;
+        titulo.style.fontSize = `${tamano}px`;
+    }
+
+    if (titulo.scrollWidth > titulo.clientWidth + 1) {
+        titulo.classList.add("nombre-partido");
     }
 }
 
@@ -1817,13 +1843,12 @@ function renderizarEvolucionEevee(raiz, especieSeleccionada) {
     const contenedor = document.createElement("div");
     contenedor.className = "evolucion-eevee";
 
-    const conexiones = document.createElement("div");
-    conexiones.className = "eevee-conexiones";
-
     const centro = document.createElement("div");
     centro.className = "eevee-centro";
     centro.appendChild(crearTarjetaEvolucion(raiz, especieSeleccionada, "eevee-principal"));
+    contenedor.appendChild(centro);
 
+    /* Brújula alrededor de Eevee: cada flecha va entre Eevee y su evolución y apunta hacia ella */
     const posiciones = [
         ["nw", "↖"],
         ["n", "↑"],
@@ -1837,23 +1862,20 @@ function renderizarEvolucionEevee(raiz, especieSeleccionada) {
 
     raiz.evolves_to.forEach((hijo, posicionHijo) => {
         const posicion = posiciones[posicionHijo] || posiciones[posiciones.length - 1];
+
         const rama = document.createElement("div");
         rama.className = `eevee-rama eevee-${posicion[0]}`;
-
-        const contenido = document.createElement("div");
-        contenido.className = "eevee-contenido";
-        contenido.appendChild(crearTarjetaEvolucion(hijo, especieSeleccionada));
-        contenido.appendChild(crearCondicionEvolutiva(hijo));
+        rama.appendChild(crearTarjetaEvolucion(hijo, especieSeleccionada));
+        rama.appendChild(crearCondicionEvolutiva(hijo));
 
         const flecha = document.createElement("span");
-        flecha.className = "eevee-flecha";
+        flecha.className = `eevee-flecha eevee-${posicion[0]}`;
+        flecha.setAttribute("aria-hidden", "true");
         flecha.textContent = posicion[1];
 
-        rama.append(contenido, flecha);
-        contenedor.appendChild(rama);
+        contenedor.append(rama, flecha);
     });
 
-    contenedor.append(conexiones, centro);
     elementos.evoluciones.appendChild(contenedor);
 }
 
@@ -2387,6 +2409,12 @@ function prepararAvisoInstalacion() {
         escribirAlmacen("ultraball-aviso-instalar", "cerrado");
     });
 }
+
+window.addEventListener("resize", () => {
+    if (elementos.ficha?.classList.contains("visible")) {
+        ajustarNombrePokemon();
+    }
+});
 
 async function iniciarApp() {
     iniciarElementos();
