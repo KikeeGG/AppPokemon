@@ -1415,14 +1415,7 @@ footer strong {
 
 /* ---------- Tarjeta de ataques ---------- */
 
-.ataques-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 14px 8px;
-    margin-bottom: 14px;
-}
-
-.ataques-chips[hidden],
+.ataques-juegos[hidden],
 .ataques-vacio[hidden],
 .ataques-mas[hidden] {
     display: none;
@@ -1437,7 +1430,7 @@ footer strong {
 
 .ataque-fila {
     display: grid;
-    grid-template-columns: 44px minmax(0, 1fr) auto;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
     align-items: center;
     gap: 10px;
     min-height: 48px;
@@ -1467,24 +1460,6 @@ footer strong {
     font-weight: 700;
 }
 
-.ataque-texto {
-    display: grid;
-    gap: 1px;
-    min-width: 0;
-}
-
-.ataque-texto strong {
-    overflow-wrap: anywhere;
-    color: #ffffff;
-    font-size: 14px;
-    font-weight: 650;
-}
-
-.ataque-texto small {
-    color: var(--texto-suave);
-    font-size: 11px;
-}
-
 .ataques-vacio {
     margin: 4px 0 0;
     color: var(--texto-suave);
@@ -1507,3 +1482,137 @@ footer strong {
 .bloque[hidden] {
     display: none;
 }
+
+/* ---------- Selectores de la tarjeta de ataques (estilo control segmentado) ---------- */
+
+.ataques-seg {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 13px;
+    background: rgba(0, 0, 0, 0.22);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+}
+
+.ataques-gens {
+    margin-top: 10px;
+}
+
+.seg-opcion {
+    position: relative;
+    min-width: 0;
+    min-height: 36px;
+    padding: 0 4px;
+    border: 0;
+    border-radius: 10px;
+    color: var(--texto-suave);
+    background: transparent;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease;
+}
+
+/* Zona táctil de 44 pt sin cambiar el aspecto */
+.seg-opcion::after {
+    position: absolute;
+    inset: -4px -1px;
+    content: "";
+}
+
+.seg-opcion.activa {
+    color: #ffffff;
+    background: color-mix(in srgb, var(--accent) 38%, rgba(255, 255, 255, 0.1));
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+    font-weight: 800;
+}
+
+.seg-opcion:disabled {
+    opacity: 0.32;
+    cursor: default;
+}
+
+.seg-gen {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+}
+
+.ataques-caption {
+    margin: 9px 2px 12px;
+    color: var(--texto-suave);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.ataques-juegos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 6px;
+    margin: -2px 0 14px;
+}
+
+.ataques-juego {
+    position: relative;
+    min-height: 28px;
+    padding: 0 11px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    color: var(--texto-suave);
+    background: transparent;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.ataques-juego::after {
+    position: absolute;
+    inset: -8px -3px;
+    content: "";
+}
+
+.ataques-juego.activa {
+    color: #ffffff;
+    border-color: color-mix(in srgb, var(--accent) 65%, white);
+    background: color-mix(in srgb, var(--accent) 22%, rgba(255, 255, 255, 0.06));
+}
+
+/* ---------- Fila de ataque: nombre, símbolo de clase y tipo ---------- */
+
+.ataque-nombre {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 650;
+    line-height: 1.25;
+}
+
+.ataque-etiquetas {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.ataque-clase {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 28px;
+    height: 20px;
+    border-radius: 7px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28), 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.ataque-clase svg {
+    width: 16px;
+    height: 16px;
+}
+
+.ataque-clase-f { background: linear-gradient(#f0773f, #c9461b); }
+.ataque-clase-e { background: linear-gradient(#5b8ff0, #3562c4); }
+.ataque-clase-s { background: linear-gradient(#a3a9b4, #6f7683); }

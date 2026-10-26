@@ -248,6 +248,7 @@ function iniciarElementos() {
         "ataquesMetodos",
         "ataquesGens",
         "ataquesJuegos",
+        "ataquesCaption",
         "ataquesLista",
         "ataquesVacio",
         "ataquesMas"
@@ -1276,6 +1277,23 @@ const METODOS_ATAQUE = [
 ];
 
 const CLASES_ATAQUE = { f: "Físico", e: "Especial", s: "Estado" };
+
+/* Símbolos de clase de movimiento (físico / especial / estado), dibujados con SVG propio */
+const ICONOS_CLASE = {
+    f: '<path d="M12 3.2l2 4.1 4.4-1.4-1.4 4.4 4.1 2-4.1 2 1.4 4.4-4.4-1.4-2 4.1-2-4.1-4.4 1.4 1.4-4.4-4.1-2 4.1-2-1.4-4.4 4.4 1.4z" fill="#fff"/>',
+    e: '<circle cx="12" cy="12" r="7.2" fill="none" stroke="#fff" stroke-width="2.2"/><circle cx="12" cy="12" r="2.6" fill="#fff"/>',
+    s: '<ellipse cx="12" cy="12" rx="7.6" ry="4.4" fill="none" stroke="#fff" stroke-width="2.2" transform="rotate(-28 12 12)"/>'
+};
+
+function crearIconoClase(clase) {
+    const icono = document.createElement("span");
+    icono.className = `ataque-clase ataque-clase-${clase}`;
+    icono.setAttribute("role", "img");
+    icono.setAttribute("aria-label", CLASES_ATAQUE[clase]);
+    icono.title = CLASES_ATAQUE[clase];
+    icono.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONOS_CLASE[clase]}</svg>`;
+    return icono;
+}
 const ATAQUES_POR_PAGINA = 30;
 
 /* Preferencias que se mantienen al cambiar de Pokémon */
@@ -1334,10 +1352,11 @@ function prepararAtaques(pokemon) {
     renderizarAtaques();
 }
 
-function crearChipAtaque(texto, activo, alPulsar, etiquetaAria) {
+function crearChipAtaque(texto, activo, alPulsar, etiquetaAria, clase = "seg-opcion", deshabilitado = false) {
     const boton = document.createElement("button");
     boton.type = "button";
-    boton.className = "forma-chip" + (activo ? " activa" : "");
+    boton.className = clase + (activo ? " activa" : "");
+    boton.disabled = deshabilitado;
     boton.textContent = texto;
     boton.setAttribute("aria-pressed", activo ? "true" : "false");
 
@@ -1376,16 +1395,22 @@ function renderizarAtaques() {
 
     elementos.ataquesMetodos.hidden = metodos.length < 2;
 
-    /* Generación */
+    /* Generación: siempre las nueve celdas; las que no tienen datos quedan apagadas */
     elementos.ataquesGens.innerHTML = "";
-    generaciones.forEach(g => elementos.ataquesGens.appendChild(
-        crearChipAtaque(`Gen ${g.romano}`, g.n === gen.n, () => {
-            ataquesEstado.gen = g.n;
-            ataquesEstado.juego = null;
-            ataquesEstado.limite = ATAQUES_POR_PAGINA;
-            renderizarAtaques();
-        }, `Generación ${g.n}`)
-    ));
+    GENERACIONES.forEach(g => {
+        const hay = generaciones.some(x => x.n === g.n);
+
+        elementos.ataquesGens.appendChild(
+            crearChipAtaque(g.romano, g.n === gen.n, () => {
+                ataquesEstado.gen = g.n;
+                ataquesEstado.juego = null;
+                ataquesEstado.limite = ATAQUES_POR_PAGINA;
+                renderizarAtaques();
+            }, `Generación ${g.n}`, "seg-opcion seg-gen", !hay)
+        );
+    });
+
+    elementos.ataquesCaption.textContent = `Generación ${gen.romano} · ${gen.juegos.length > 1 ? "elige juego" : juego[1]}`;
 
     /* Juego (solo si la generación tiene más de uno con datos) */
     elementos.ataquesJuegos.innerHTML = "";
@@ -1394,7 +1419,7 @@ function renderizarAtaques() {
             ataquesEstado.juego = clave;
             ataquesEstado.limite = ATAQUES_POR_PAGINA;
             renderizarAtaques();
-        })
+        }, null, "ataques-juego")
     ));
     elementos.ataquesJuegos.hidden = gen.juegos.length < 2;
 
@@ -1417,25 +1442,22 @@ function crearFilaAtaque(ataque, metodo) {
         cuando.classList.add("ataque-cuando-texto");
     }
 
-    const texto = document.createElement("span");
-    texto.className = "ataque-texto";
-
     const nombre = document.createElement("strong");
+    nombre.className = "ataque-nombre";
     nombre.textContent = info?.[0] || prettificar(ataque.nombre);
-    texto.appendChild(nombre);
+
+    const etiquetas = document.createElement("span");
+    etiquetas.className = "ataque-etiquetas";
 
     if (info?.[2]) {
-        const clase = document.createElement("small");
-        clase.textContent = CLASES_ATAQUE[info[2]];
-        texto.appendChild(clase);
+        etiquetas.appendChild(crearIconoClase(info[2]));
     }
-
-    fila.append(cuando, texto);
 
     if (info?.[1]) {
-        fila.appendChild(crearChipTipo(info[1]));
+        etiquetas.appendChild(crearChipTipo(info[1]));
     }
 
+    fila.append(cuando, nombre, etiquetas);
     return fila;
 }
 
