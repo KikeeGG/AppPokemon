@@ -2364,8 +2364,33 @@ function registrarServiceWorker() {
     }
 }
 
+/* ---------- Aviso para instalar la app (solo en Safari de iPhone/iPad, fuera de la app instalada) ---------- */
+
+function prepararAvisoInstalacion() {
+    const aviso = document.getElementById("instalarAviso");
+    const cerrar = document.getElementById("instalarCerrar");
+
+    if (!aviso || !cerrar) {
+        return;
+    }
+
+    const esIos = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    const instalada = navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
+
+    if (!esIos || instalada || leerAlmacen("ultraball-aviso-instalar") === "cerrado") {
+        return;
+    }
+
+    aviso.hidden = false;
+    cerrar.addEventListener("click", () => {
+        aviso.hidden = true;
+        escribirAlmacen("ultraball-aviso-instalar", "cerrado");
+    });
+}
+
 async function iniciarApp() {
     iniciarElementos();
+    prepararAvisoInstalacion();
     prepararEventos();
 
     if (SWIPE_ACTIVO) {
