@@ -642,8 +642,11 @@ input {
     padding: 6px 8px;
     border-radius: 999px;
     color: var(--tipo-texto, #ffffff);
-    background: color-mix(in srgb, var(--tipo-color, #6f7c91) 88%, #2a3448);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.13);
+    /* Insignia al estilo de Rubí Omega / Zafiro Alfa: color vivo, borde claro por dentro y filo oscuro por fuera */
+    background: var(--tipo-color, #6f7c91);
+    box-shadow:
+        inset 0 0 0 1.5px rgba(255, 255, 255, 0.5),
+        0 0 0 1px color-mix(in srgb, var(--tipo-color, #6f7c91) 45%, #0b1220);
     font-size: 11px;
     font-weight: 700;
 }
@@ -655,24 +658,24 @@ input {
     font-variant-numeric: tabular-nums;
 }
 
-.tipo-chip[data-tipo="normal"] { --tipo-color: #a8a77a; --tipo-texto: #101a2b;; }
-.tipo-chip[data-tipo="fire"] { --tipo-color: #ee8130; --tipo-texto: #101a2b;; }
-.tipo-chip[data-tipo="water"] { --tipo-color: #6390f0; --tipo-texto: #101a2b;; }
-.tipo-chip[data-tipo="electric"] { --tipo-color: #c2a10e; --tipo-texto: #101a2b;; }
-.tipo-chip[data-tipo="grass"] { --tipo-color: #56a33d; --tipo-texto: #101a2b;; }
-.tipo-chip[data-tipo="ice"] { --tipo-color: #58aaa7; --tipo-texto: #101a2b;; }
-.tipo-chip[data-tipo="fighting"] { --tipo-color: #c22e28; --tipo-texto: #ffffff; }
-.tipo-chip[data-tipo="poison"] { --tipo-color: #a33ea1; --tipo-texto: #ffffff; }
-.tipo-chip[data-tipo="ground"] { --tipo-color: #ac9143; --tipo-texto: #101a2b;; }
-.tipo-chip[data-tipo="flying"] { --tipo-color: #836cc9; --tipo-texto: #ffffff; }
-.tipo-chip[data-tipo="psychic"] { --tipo-color: #c13c69; --tipo-texto: #ffffff; }
-.tipo-chip[data-tipo="bug"] { --tipo-color: #708410; --tipo-texto: #ffffff; }
-.tipo-chip[data-tipo="rock"] { --tipo-color: #88771f; --tipo-texto: #ffffff; }
-.tipo-chip[data-tipo="ghost"] { --tipo-color: #6a518b; --tipo-texto: #ffffff; }
-.tipo-chip[data-tipo="dragon"] { --tipo-color: #6343c6; --tipo-texto: #ffffff; }
-.tipo-chip[data-tipo="dark"] { --tipo-color: #584332; --tipo-texto: #ffffff; }
-.tipo-chip[data-tipo="steel"] { --tipo-color: #77798f; --tipo-texto: #ffffff; }
-.tipo-chip[data-tipo="fairy"] { --tipo-color: #a96387; --tipo-texto: #ffffff; }
+.tipo-chip[data-tipo="normal"] { --tipo-color: #bbbbaa; --tipo-texto: #101a2b; }
+.tipo-chip[data-tipo="fire"] { --tipo-color: #ff4422; --tipo-texto: #101a2b; }
+.tipo-chip[data-tipo="water"] { --tipo-color: #3399ff; --tipo-texto: #101a2b; }
+.tipo-chip[data-tipo="electric"] { --tipo-color: #ffcc33; --tipo-texto: #101a2b; }
+.tipo-chip[data-tipo="grass"] { --tipo-color: #77cc55; --tipo-texto: #101a2b; }
+.tipo-chip[data-tipo="ice"] { --tipo-color: #77ddff; --tipo-texto: #101a2b; }
+.tipo-chip[data-tipo="fighting"] { --tipo-color: #bb5544; --tipo-texto: #ffffff; }
+.tipo-chip[data-tipo="poison"] { --tipo-color: #aa5599; --tipo-texto: #ffffff; }
+.tipo-chip[data-tipo="ground"] { --tipo-color: #ddbb55; --tipo-texto: #101a2b; }
+.tipo-chip[data-tipo="flying"] { --tipo-color: #6699ff; --tipo-texto: #101a2b; }
+.tipo-chip[data-tipo="psychic"] { --tipo-color: #ff5599; --tipo-texto: #101a2b; }
+.tipo-chip[data-tipo="bug"] { --tipo-color: #aabb22; --tipo-texto: #101a2b; }
+.tipo-chip[data-tipo="rock"] { --tipo-color: #bbaa66; --tipo-texto: #101a2b; }
+.tipo-chip[data-tipo="ghost"] { --tipo-color: #6666bb; --tipo-texto: #ffffff; }
+.tipo-chip[data-tipo="dragon"] { --tipo-color: #7060e8; --tipo-texto: #ffffff; }
+.tipo-chip[data-tipo="dark"] { --tipo-color: #775544; --tipo-texto: #ffffff; }
+.tipo-chip[data-tipo="steel"] { --tipo-color: #aaaabb; --tipo-texto: #101a2b; }
+.tipo-chip[data-tipo="fairy"] { --tipo-color: #ffaaff; --tipo-texto: #101a2b; }
 
 .hero-sprite-wrap {
     position: relative;
