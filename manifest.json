@@ -1,4 +1,5 @@
 {
+    "id": "./",
     "name": "Ultraball",
     "short_name": "Ultraball",
     "description": "Pokédex web conectada a PokéAPI",
@@ -9,6 +10,11 @@
     "background_color": "#233044",
     "theme_color": "#233044",
     "orientation": "portrait",
+    "categories": [
+        "games",
+        "utilities",
+        "reference"
+    ],
     "icons": [
         {
             "src": "icon-192.png",

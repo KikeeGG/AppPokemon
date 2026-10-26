@@ -44,6 +44,23 @@ button {
     -webkit-tap-highlight-color: transparent;
 }
 
+/* Comportamiento de app nativa: sin zoom de texto automático, sin menú al mantener pulsado y sin selección accidental */
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+input {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
 .fondo-pokemon {
     position: fixed;
     z-index: 0;
@@ -84,7 +101,11 @@ button {
     min-height: 100vh;
     min-height: 100dvh;
     margin: 0 auto;
-    padding: calc(22px + env(safe-area-inset-top)) 16px calc(32px + env(safe-area-inset-bottom));
+    padding:
+        calc(22px + env(safe-area-inset-top))
+        calc(16px + env(safe-area-inset-right))
+        calc(32px + env(safe-area-inset-bottom))
+        calc(16px + env(safe-area-inset-left));
 }
 
 .cabecera {
@@ -1102,7 +1123,7 @@ footer strong {
 
 @media (min-width: 700px) {
     .app {
-        padding-top: 34px;
+        padding-top: calc(34px + env(safe-area-inset-top));
     }
 
     .hero {
@@ -1120,8 +1141,8 @@ footer strong {
 
 @media (max-width: 390px) {
     .app {
-        padding-right: 12px;
-        padding-left: 12px;
+        padding-right: calc(12px + env(safe-area-inset-right));
+        padding-left: calc(12px + env(safe-area-inset-left));
     }
 
     .hero {
@@ -1616,3 +1637,47 @@ footer strong {
 .ataque-clase-f { background: linear-gradient(#f0773f, #c9461b); }
 .ataque-clase-e { background: linear-gradient(#5b8ff0, #3562c4); }
 .ataque-clase-s { background: linear-gradient(#a3a9b4, #6f7683); }
+
+
+/* ---------- Aviso de instalación ---------- */
+
+.instalar-aviso {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 14px;
+    padding: 10px 6px 10px 14px;
+    border: 1px solid var(--borde);
+    border-radius: 14px;
+    background: var(--cristal);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+}
+
+.instalar-aviso[hidden] {
+    display: none;
+}
+
+.instalar-aviso p {
+    flex: 1;
+    margin: 0;
+    color: var(--texto-suave);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.instalar-aviso strong {
+    color: #ffffff;
+}
+
+.instalar-cerrar {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    color: var(--texto-suave);
+    background: transparent;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+}
