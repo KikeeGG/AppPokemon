@@ -34,24 +34,24 @@ const nombresTipos = {
 };
 
 const coloresTipos = {
-    normal: "#a8a77a",
-    fire: "#ee8130",
-    water: "#6390f0",
-    electric: "#f7d02c",
-    grass: "#7ac74c",
-    ice: "#96d9d6",
-    fighting: "#c22e28",
-    poison: "#a33ea1",
-    ground: "#e2bf65",
-    flying: "#a98ff3",
-    psychic: "#f95587",
-    bug: "#a6b91a",
-    rock: "#b6a136",
-    ghost: "#735797",
-    dragon: "#6f35fc",
-    dark: "#705746",
-    steel: "#b7b7ce",
-    fairy: "#d685ad"
+    normal: "#bbbbaa",
+    fire: "#ff4422",
+    water: "#3399ff",
+    electric: "#ffcc33",
+    grass: "#77cc55",
+    ice: "#77ddff",
+    fighting: "#bb5544",
+    poison: "#aa5599",
+    ground: "#ddbb55",
+    flying: "#6699ff",
+    psychic: "#ff5599",
+    bug: "#aabb22",
+    rock: "#bbaa66",
+    ghost: "#6666bb",
+    dragon: "#7060e8",
+    dark: "#775544",
+    steel: "#aaaabb",
+    fairy: "#ffaaff"
 };
 
 const ordenTipos = Object.keys(nombresTipos);
