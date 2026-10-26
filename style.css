@@ -338,13 +338,12 @@ input {
 .habilidad-detalle-cabecera::after {
     position: absolute;
     content: "";
-    width: 120px;
-    height: 120px;
-    right: -55px;
-    top: -60px;
+    width: 220px;
+    height: 220px;
+    right: -105px;
+    top: -110px;
     border-radius: 50%;
-    background: color-mix(in srgb, var(--accent) 24%, transparent);
-    filter: blur(28px);
+    background: radial-gradient(circle, color-mix(in srgb, var(--accent) 24%, transparent) 0, color-mix(in srgb, var(--accent) 12%, transparent) 45%, transparent 70%);
     pointer-events: none;
 }
 
@@ -540,16 +539,20 @@ input {
     background: rgba(255, 255, 255, 0.045);
 }
 
+/* El brillo del color del tipo es un degradado (sin filtro de desenfoque), así no se corta ni dibuja píxeles raros en la esquina redondeada */
 .hero::before {
     position: absolute;
     content: "";
-    top: -100px;
-    right: -110px;
-    width: 280px;
-    height: 280px;
-    border-radius: 50%;
-    background: color-mix(in srgb, var(--accent) 30%, transparent);
-    filter: blur(35px);
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(
+        circle 190px at calc(100% - 30px) 40px,
+        color-mix(in srgb, var(--accent) 30%, transparent) 0,
+        color-mix(in srgb, var(--accent) 27%, transparent) 38%,
+        color-mix(in srgb, var(--accent) 14%, transparent) 70%,
+        transparent 100%
+    );
 }
 
 .hero-texto {
@@ -689,7 +692,7 @@ input {
     max-height: 100%;
     object-fit: contain;
     object-position: center;
-    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.12)) drop-shadow(0 17px 19px rgba(0, 0, 0, 0.0ve));
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.12)) drop-shadow(0 17px 19px rgba(0, 0, 0, 0.18));
     transform: translateY(3px);
 }
 
