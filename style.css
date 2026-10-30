@@ -1664,3 +1664,69 @@ footer strong {
 .hero h1.nombre-partido {
     overflow-wrap: anywhere;
 }
+
+
+/* ---------- Movimientos: buscador, tarjeta de ataques y ficha ---------- */
+
+.sugerencia-movimiento .sugerencia-icono {
+    color: color-mix(in srgb, var(--accent) 75%, white);
+    background: color-mix(in srgb, var(--accent) 12%, rgba(255, 255, 255, 0.06));
+}
+
+/* El nombre del ataque pasa a ser un botón con exactamente el mismo aspecto que tenía */
+button.ataque-nombre {
+    padding: 0;
+    border: 0;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.ataque-fila.clicable {
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.ataque-fila.clicable:active {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.movimiento-datos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+    gap: 14px 10px;
+}
+
+.dato-movimiento {
+    display: grid;
+    align-content: start;
+    gap: 6px;
+    min-width: 0;
+}
+
+.dato-movimiento > span {
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.dato-movimiento > strong {
+    display: flex;
+    align-items: center;
+    min-height: 28px;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.dato-categoria {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 14px;
+    font-weight: 650;
+}

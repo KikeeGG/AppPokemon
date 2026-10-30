@@ -198,12 +198,16 @@ const indice = {
     habilidadPorNombre: new Map(),
     pokemonPorClave: new Map(),
     habilidadPorClave: new Map(),
+    movimientos: [],
+    movimientoPorNombre: new Map(),
+    movimientoPorClave: new Map(),
     maximoEspecie: ESPECIES_MAXIMO_DEFECTO
 };
 
 const cachePokemon = new Map();
 const cacheSpecies = new Map();
 const cacheAbility = new Map();
+const cacheMove = new Map();
 const cacheType = new Map();
 const cacheChain = new Map();
 const pendientes = new Map();
@@ -373,6 +377,9 @@ function volverAtras() {
     if (anterior.tipo === "habilidad") {
         ponerTextoBuscador(nombreHabilidad(anterior.nombre));
         buscarHabilidad(anterior.nombre, { atras: true });
+    } else if (anterior.tipo === "movimiento") {
+        ponerTextoBuscador(nombreMovimiento(anterior.nombre));
+        buscarMovimiento(anterior.nombre, { atras: true });
     } else {
         ponerTextoBuscador(nombrePokemon(anterior.nombre));
         buscarPokemon(anterior.nombre, { atras: true });
@@ -509,6 +516,18 @@ function construirIndice(d) {
             }
         }
     });
+
+    Object.entries(d.ataques || {}).forEach(([name, [es]]) => {
+        const movimiento = { name, es, claveEs: clave(es), claveEn: clave(name) };
+        indice.movimientos.push(movimiento);
+        indice.movimientoPorNombre.set(name, movimiento);
+
+        for (const k of [movimiento.claveEs, movimiento.claveEn]) {
+            if (!indice.movimientoPorClave.has(k)) {
+                indice.movimientoPorClave.set(k, { tipo: "movimiento", nombre: name });
+            }
+        }
+    });
 }
 
 async function cargarDatos() {
@@ -568,6 +587,12 @@ function nombrePokemon(nombreApiPokemon) {
 function nombreHabilidad(nombreApiHabilidad, detalle) {
     return indice.habilidadPorNombre.get(nombreApiHabilidad)?.es
         || obtenerNombreLocalizado(detalle?.names, prettificar(nombreApiHabilidad));
+}
+
+function nombreMovimiento(nombreApiMovimiento, detalle) {
+    return indice.movimientoPorNombre.get(nombreApiMovimiento)?.es
+        || datos?.movimientos?.[nombreApiMovimiento]
+        || obtenerNombreLocalizado(detalle?.names, prettificar(nombreApiMovimiento));
 }
 
 function traducirItem(nombre) {
@@ -684,12 +709,32 @@ function buscarCoincidencias(texto) {
         }
     }
 
+    const movimientosEmpiezan = [];
+    const movimientosContienen = [];
+
+    for (const movimiento of indice.movimientos) {
+        const resultado = {
+            tipo: "movimiento",
+            nombre: movimiento.name,
+            etiqueta: movimiento.es,
+            detalle: "Movimiento"
+        };
+
+        if (movimiento.claveEs.startsWith(consulta) || movimiento.claveEn.startsWith(consulta)) {
+            movimientosEmpiezan.push(resultado);
+        } else if (movimiento.claveEs.includes(consulta) || movimiento.claveEn.includes(consulta)) {
+            movimientosContienen.push(resultado);
+        }
+    }
+
     return [
         ...pokemonEmpiezan,
         ...habilidadesEmpiezan,
         ...pokemonContienen,
         ...habilidadesContienen,
-        ...formasContienen
+        ...formasContienen,
+        ...movimientosEmpiezan,
+        ...movimientosContienen
     ].slice(0, 8);
 }
 
@@ -706,7 +751,7 @@ function resolverEntrada(texto) {
         return especie ? { tipo: "pokemon", nombre: especie.defecto } : null;
     }
 
-    return indice.pokemonPorClave.get(k) || indice.habilidadPorClave.get(k) || null;
+    return indice.pokemonPorClave.get(k) || indice.habilidadPorClave.get(k) || indice.movimientoPorClave.get(k) || null;
 }
 
 function actualizarSugerenciasIniciales() {
@@ -733,12 +778,12 @@ function renderizarSugerencias(coincidencias, mostrar) {
     coincidencias.forEach(resultado => {
         const boton = document.createElement("button");
         boton.type = "button";
-        boton.className = `sugerencia ${resultado.tipo === "habilidad" ? "sugerencia-habilidad" : ""}`;
+        boton.className = `sugerencia ${resultado.tipo === "habilidad" ? "sugerencia-habilidad" : ""} ${resultado.tipo === "movimiento" ? "sugerencia-movimiento" : ""}`;
         boton.dataset.nombre = resultado.nombre;
 
         const icono = document.createElement("span");
         icono.className = "sugerencia-icono";
-        icono.textContent = resultado.tipo === "habilidad" ? "✦" : "◈";
+        icono.textContent = resultado.tipo === "habilidad" ? "✦" : resultado.tipo === "movimiento" ? "⚔\uFE0E" : "◈";
 
         const contenido = document.createElement("span");
         contenido.className = "sugerencia-contenido";
@@ -778,6 +823,10 @@ function abrirResultado(resultado) {
         return buscarHabilidad(resultado.nombre);
     }
 
+    if (resultado.tipo === "movimiento") {
+        return buscarMovimiento(resultado.nombre);
+    }
+
     return buscarPokemon(resultado.nombre);
 }
 
@@ -790,6 +839,12 @@ function irAPokemon(nombreApiPokemon) {
 function irAHabilidad(nombreApiHabilidad) {
     ponerTextoBuscador(nombreHabilidad(nombreApiHabilidad));
     buscarHabilidad(nombreApiHabilidad);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function irAMovimiento(nombreApiMovimiento) {
+    ponerTextoBuscador(nombreMovimiento(nombreApiMovimiento));
+    buscarMovimiento(nombreApiMovimiento);
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -817,7 +872,11 @@ async function buscarEntrada(texto) {
         const resultadoHabilidad = await buscarHabilidad(nombre, { silencioso404: true });
 
         if (resultadoHabilidad === "404") {
-            mostrarNoEncontrado(entrada);
+            const resultadoMovimiento = await buscarMovimiento(nombre, { silencioso404: true });
+
+            if (resultadoMovimiento === "404") {
+                mostrarNoEncontrado(entrada);
+            }
         }
     }
 }
@@ -1136,6 +1195,202 @@ function renderizarDetalleHabilidad(habilidad) {
     document.title = `${nombre} · Habilidad · Ultraball`;
 }
 
+/* ---------- Movimientos (ficha de un movimiento; funciona igual que la de las habilidades) ---------- */
+
+async function buscarMovimiento(entrada, opciones = {}) {
+    const nombre = nombreApi(entrada);
+
+    if (!nombre) {
+        return "error";
+    }
+
+    ocultarSugerencias();
+    elementos.error.textContent = "";
+    const idSolicitud = ++solicitudActual;
+
+    mostrarEstado(`Buscando movimiento ${nombreMovimiento(nombre)}...`);
+
+    try {
+        const movimiento = await obtenerJSON(`${API}/move/${encodeURIComponent(nombre)}`, cacheMove);
+
+        if (idSolicitud !== solicitudActual) {
+            return "obsoleta";
+        }
+
+        elementos.ficha.classList.remove("visible");
+        renderizarDetalleMovimiento(movimiento);
+        ocultarEstado();
+        gestionarHistorial("movimiento", movimiento.name, opciones);
+        return "ok";
+    } catch (error) {
+        console.error("Error cargando movimiento:", error);
+
+        if (idSolicitud !== solicitudActual) {
+            return "obsoleta";
+        }
+
+        ocultarEstado();
+
+        if (error.codigo === 404) {
+            if (!opciones.silencioso404) {
+                mostrarNoEncontrado(entrada);
+            }
+
+            return "404";
+        }
+
+        mostrarErrorDeRed();
+        return "error";
+    }
+}
+
+const CLASES_MOVIMIENTO_API = { physical: "f", special: "e", status: "s" };
+
+/* El efecto técnico de PokéAPI trae marcas como "$effect_chance%" o "[Protect]{move:protect}" */
+function limpiarEfectoMovimiento(texto, probabilidad) {
+    return texto
+        .replace(/\$effect_chance/g, probabilidad ?? "")
+        .replace(/\[([^\]]*)\]\{[^}]*\}/g, "$1")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function crearDatoMovimiento(titulo, contenido) {
+    const dato = document.createElement("div");
+    dato.className = "dato-movimiento";
+
+    const etiqueta = document.createElement("span");
+    etiqueta.textContent = titulo;
+
+    const valor = document.createElement("strong");
+
+    if (contenido instanceof Node) {
+        valor.appendChild(contenido);
+    } else {
+        valor.textContent = contenido;
+    }
+
+    dato.append(etiqueta, valor);
+    return dato;
+}
+
+function renderizarDetalleMovimiento(movimiento) {
+    const nombre = nombreMovimiento(movimiento.name, movimiento);
+    const textoEs = textoHabilidadEnEspanol(movimiento);
+    const efectoEnBruto = obtenerTextoLocalizado(movimiento.effect_entries, "effect");
+    const efectoEn = limpiarEfectoMovimiento(efectoEnBruto, movimiento.effect_chance);
+    const principal = textoEs || efectoEn || "No hay una descripción disponible para este movimiento.";
+    const pokemon = [...movimiento.learned_by_pokemon].sort((a, b) => extraerId(a.url) - extraerId(b.url));
+
+    elementos.habilidadDetalle.innerHTML = "";
+    elementos.habilidadDetalle.classList.add("visible");
+
+    const cabecera = document.createElement("div");
+    cabecera.className = "habilidad-detalle-cabecera";
+
+    const etiqueta = document.createElement("span");
+    etiqueta.className = "detalle-etiqueta";
+    etiqueta.textContent = "MOVIMIENTO";
+
+    const titulo = document.createElement("h2");
+    titulo.textContent = nombre;
+
+    const nombreEnApi = document.createElement("p");
+    nombreEnApi.className = "detalle-subtitulo";
+    nombreEnApi.textContent = prettificar(movimiento.name);
+
+    cabecera.append(etiqueta, titulo, nombreEnApi);
+
+    /* Datos de combate: tipo, categoría, potencia, precisión y PP */
+    const datosCombate = document.createElement("div");
+    datosCombate.className = "habilidad-descripcion movimiento-datos";
+
+    const clase = CLASES_MOVIMIENTO_API[movimiento.damage_class?.name];
+    const tipoMovimiento = movimiento.type?.name;
+
+    if (tipoMovimiento) {
+        datosCombate.appendChild(crearDatoMovimiento("TIPO", crearChipTipo(tipoMovimiento)));
+    }
+
+    if (clase) {
+        const categoria = document.createElement("span");
+        categoria.className = "dato-categoria";
+        categoria.append(crearIconoClase(clase), document.createTextNode(CLASES_ATAQUE[clase]));
+        datosCombate.appendChild(crearDatoMovimiento("CATEGORÍA", categoria));
+    }
+
+    datosCombate.appendChild(crearDatoMovimiento("POTENCIA", movimiento.power ?? "—"));
+    datosCombate.appendChild(crearDatoMovimiento("PRECISIÓN", movimiento.accuracy !== null && movimiento.accuracy !== undefined ? `${movimiento.accuracy}%` : "—"));
+    datosCombate.appendChild(crearDatoMovimiento("PP", movimiento.pp ?? "—"));
+
+    if (movimiento.priority) {
+        datosCombate.appendChild(crearDatoMovimiento("PRIORIDAD", movimiento.priority > 0 ? `+${movimiento.priority}` : String(movimiento.priority)));
+    }
+
+    const descripcion = document.createElement("div");
+    descripcion.className = "habilidad-descripcion";
+
+    const descripcionTitulo = document.createElement("span");
+    descripcionTitulo.textContent = "¿QUÉ HACE?";
+
+    const descripcionTexto = document.createElement("p");
+    descripcionTexto.textContent = principal;
+
+    descripcion.append(descripcionTitulo, descripcionTexto);
+
+    if (textoEs && efectoEn) {
+        const detalleTecnico = document.createElement("small");
+        detalleTecnico.textContent = `En detalle (inglés): ${efectoEn}`;
+        descripcion.appendChild(detalleTecnico);
+    }
+
+    const poseedores = document.createElement("div");
+    poseedores.className = "habilidad-poseedores";
+
+    const poseedoresCabecera = document.createElement("div");
+    poseedoresCabecera.className = "poseedores-cabecera";
+
+    const poseedoresTitulo = document.createElement("div");
+    const poseedoresEtiqueta = document.createElement("span");
+    poseedoresEtiqueta.textContent = "POKÉMON QUE LO APRENDEN";
+    const poseedoresTotal = document.createElement("small");
+    poseedoresTotal.textContent = `${pokemon.length} Pokémon registrados`;
+    poseedoresTitulo.append(poseedoresEtiqueta, poseedoresTotal);
+    poseedoresCabecera.appendChild(poseedoresTitulo);
+
+    const grid = document.createElement("div");
+    grid.className = "poseedores-grid";
+
+    pokemon.forEach(item => {
+        const tarjeta = document.createElement("button");
+        tarjeta.type = "button";
+        tarjeta.className = "poseedor-pokemon";
+
+        const nombreMostrado = nombrePokemon(item.name);
+        const idPokemon = extraerId(item.url);
+        const sprite = document.createElement("img");
+        sprite.loading = "lazy";
+        asignarSpriteConRespaldo(sprite, idPokemon, true);
+        sprite.alt = `Sprite de ${nombreMostrado}`;
+
+        const texto = document.createElement("span");
+        texto.textContent = nombreMostrado;
+
+        const numero = document.createElement("small");
+        numero.textContent = formatearNumero(indice.pokemonPorNombre.get(item.name)?.sid ?? idPokemon);
+
+        tarjeta.append(sprite, texto, numero);
+        tarjeta.addEventListener("click", () => irAPokemon(item.name));
+
+        grid.appendChild(tarjeta);
+    });
+
+    poseedores.append(poseedoresCabecera, grid);
+    elementos.habilidadDetalle.append(cabecera, datosCombate, descripcion, poseedores);
+
+    document.title = `${nombre} · Movimiento · Ultraball`;
+}
+
 /* ---------- Sprites ---------- */
 
 function urlsSprite(id, preferirPixel) {
@@ -1445,9 +1700,11 @@ function crearFilaAtaque(ataque, metodo) {
         cuando.classList.add("ataque-cuando-texto");
     }
 
-    const nombre = document.createElement("strong");
+    const nombre = document.createElement("button");
+    nombre.type = "button";
     nombre.className = "ataque-nombre";
     nombre.textContent = info?.[0] || prettificar(ataque.nombre);
+    nombre.addEventListener("click", () => irAMovimiento(ataque.nombre));
 
     const etiquetas = document.createElement("span");
     etiquetas.className = "ataque-etiquetas";
@@ -1461,6 +1718,14 @@ function crearFilaAtaque(ataque, metodo) {
     }
 
     fila.append(cuando, nombre, etiquetas);
+
+    /* Toda la fila abre el movimiento; el botón del nombre es el acceso con teclado y lector de pantalla */
+    fila.classList.add("clicable");
+    fila.addEventListener("click", evento => {
+        if (!evento.target.closest(".ataque-nombre")) {
+            irAMovimiento(ataque.nombre);
+        }
+    });
     return fila;
 }
 
